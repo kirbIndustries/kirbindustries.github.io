@@ -652,7 +652,7 @@
             ]
         };
 
-        const DISCOVERY_ROOM = 'Dropshare-discovery-v2';
+        const DISCOVERY_ROOM = 'kirbIndustries-Dropshare-GHPG';
         let userProfile = null;
         let discoveryRoomObj = null;
         let transferRoomObj = null;
@@ -932,16 +932,14 @@
                     const end = Math.min(start + CHUNK_SIZE, file.size);
                     const chunk = file.slice(start, end);
                     const buffer = await chunk.arrayBuffer();
-                    
-                    const data = new Uint8Array(buffer);
-                    
+
                     transferSend({
                         type: 'file_chunk',
                         index: i,
-                        data: data
+                        data: buffer
                     }, peerIdForTransfer);
 
-                    updateProgress('send', (i / totalChunks) * 100);
+                    updateProgress('send', ((i + 1) / totalChunks) * 100);
 
                     // Yield to avoid freezing UI and saturating WebRTC buffers
                     if (i % 4 === 0) {
@@ -1005,13 +1003,43 @@
                     
                 } else if (payload.type === 'file_chunk') {
                     if (!incomingFileMeta) return;
-                    incomingChunks[payload.index] = payload.data;
-                    updateProgress('receive', (payload.index / incomingFileMeta.totalChunks) * 100);
+                    let chunk = payload.data;
+
+                    if (chunk instanceof ArrayBuffer) {
+                        incomingChunks[payload.index] = chunk;
+                    } else if (ArrayBuffer.isView(chunk)) {
+                        incomingChunks[payload.index] = chunk.buffer;
+                    } else if (chunk && chunk.data) {
+                        // serialized typed array
+                        incomingChunks[payload.index] = new Uint8Array(chunk.data).buffer;
+                    } else {
+                        console.error("Unknown chunk format", chunk);
+                    }
+
+                    updateProgress(
+                        'receive',
+                        ((payload.index + 1) / incomingFileMeta.totalChunks) * 100
+                    );
                     
                 } else if (payload.type === 'file_end') {
                     updateProgress('receive', 100);
                     
-                    const blob = new Blob(incomingChunks, { type: incomingFileMeta.mime });
+                    if (incomingChunks.some(c => !c)) {
+                        console.error("Missing chunks");
+                        return;
+                    }
+
+                    const blob = new Blob(incomingChunks, {
+                        type: incomingFileMeta.mime
+                    });
+
+                    console.log(
+                        "Expected:",
+                        incomingFileMeta.size,
+                        "Received:",
+                        blob.size
+                    );
+
                     const url = URL.createObjectURL(blob);
                     
                     // Auto-trigger download
