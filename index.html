@@ -604,7 +604,7 @@
             </div>
         </div>
         <div class="split-bottom">
-            <p style="font-family: 'Open Runde', sans-serif; font-size: 20px; font-weight: 700; text-align:center; margin-top:0;">Waiting for recipient.</p>
+            <p style="font-family: 'Open Runde', sans-serif; font-size: 20px; font-weight: 700; text-align:center; margin-top:0;">Sending content</p>
             
             <input type="file" id="file-input" multiple style="display:none;" onchange="handleFilesSelected(this)">
             
@@ -621,7 +621,7 @@
             </div>
 
             <div id="send-progress-state" style="display:none; width:100%; max-width: 400px; text-align:center;">
-                <p id="send-filename" style="font-weight:500; font-size:16px; margin:0 0 10px 0; word-break:break-all;">Sending...</p>
+                <p id="send-filename" style="font-weight:500; font-size:16px; margin:0 0 10px 0; word-break:break-all;">Sending</p>
                 <div class="progress-bar-container">
                     <div id="send-progress-bar" class="progress-fill"></div>
                 </div>
@@ -634,8 +634,10 @@
     <div id="view-receive" class="view">
         <div class="setup-content">
             <span class="material-symbols-rounded" style="font-size: 64px; color: var(--accent); margin-bottom:16px;">downloading</span>
-            <h1 style="margin-bottom:8px;">Receiving Files</h1>
-            <p id="receive-status" style="opacity: 0.7;">Connecting to sender...</p>
+            <h1 style="margin-bottom:8px;">Receiving content</h1>
+            <p id="receive-status" style="opacity: 0.7;"><svg class="loading-spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;">
+                <rect width="100%" height="100%" fill="var(--accent)" stroke="none" class="loading-spinner-ind" />
+            </svg></p>
             
             <div id="receive-progress-container" style="display:none; width:100%; max-width: 400px; margin-top: 30px;">
                 <p id="receive-filename" style="font-weight:500; font-size:16px; margin:0 0 10px 0; text-align:left; word-break:break-all;"></p>
@@ -919,7 +921,7 @@
             if (targetPeerId) {
                 // Sending to a nearby device from Radar
                 discoverySend({ type: 'transfer_request', roomId: roomId, profile: userProfile }, targetPeerId);
-                showLoading("Waiting for user to accept...");
+                showLoading("Waiting for approval");
             }
 
             initTransferRoom(roomId, 'sender');
@@ -972,7 +974,7 @@
             } else if (role === 'receiver') {
                 setupReceiverLogic();
                 transferRoomObj.onPeerJoin(peerId => {
-                    document.getElementById('receive-status').innerText = "Connected! Waiting for files...";
+                    document.getElementById('receive-status').innerText = "Waiting for files";
                 });
             }
         }
