@@ -661,7 +661,7 @@
         
         let discoverySend, discoveryGet;
         let transferSend, transferGet;
-        let sendFile, onFileProgress;
+        let sendFile, getFile, onFileProgress;
         
         let knownPeers = {};
         let incomingRoomId = null;
@@ -884,7 +884,7 @@
 
             transferRoomObj = window.Trystero.joinRoom(CONFIG, roomId);
             [transferSend, transferGet] = transferRoomObj.makeAction('transfer');
-            [sendFile, onFileProgress] = transferRoomObj.makeAction('fileTransfer');
+            [sendFile, getFile, onFileProgress] = transferRoomObj.makeAction('fileTransfer');
 
             if (role === 'sender') {
                 transferRoomObj.onPeerJoin(peerId => {
@@ -966,20 +966,25 @@
             onFileProgress((percent, peerId, metadata) => {
                 document.getElementById('receive-status').style.display = 'none';
                 document.getElementById('receive-progress-container').style.display = 'block';
-                document.getElementById('receive-filename').innerText = `Receiving: ${metadata.name || 'File'}`;
+                if (metadata && metadata.name) {
+                    document.getElementById('receive-filename').innerText = `Receiving: ${metadata.name}`;
+                }
                 document.getElementById('btn-done-receiving').style.display = 'none';
-                updateProgress('receive', percent * 100);
+
+                const progressVal = (typeof percent === 'number' && !isNaN(percent)) ? percent * 100 : 0;
+                updateProgress('receive', progressVal);
             });
 
-            transferRoomObj.onFile((blob, peerId, metadata) => {
+            getFile((data, peerId, metadata) => {
                 updateProgress('receive', 100);
 
+                const blob = data instanceof Blob ? data : new Blob([data], { type: metadata?.mime || 'application/octet-stream' });
                 const url = URL.createObjectURL(blob);
                 
                 // Auto-trigger download
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = metadata.name || 'downloaded_file';
+                a.download = metadata?.name || 'downloaded_file';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
