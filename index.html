@@ -661,6 +661,7 @@
         
         let discoverySend, discoveryGet;
         let transferSend, transferGet;
+        let sendFile, onFileProgress;
         
         let knownPeers = {};
         let incomingRoomId = null;
@@ -676,12 +677,20 @@
         }
 
         function showView(id) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isReceivingLocked = urlParams.has('code');
+
+            // If in receiving mode, force receiver view and permanently hide app bar
+            if (isReceivingLocked && id !== 'view-receive') {
+                return;
+            }
+
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             const el = document.getElementById(id);
             if (el) el.classList.add('active');
 
             const appBar = document.getElementById('app-bar');
-            if (id === 'view-profile-setup' || id === 'view-send') {
+            if (isReceivingLocked || id === 'view-profile-setup' || id === 'view-send') {
                 appBar.style.display = 'none';
             } else {
                 appBar.style.display = 'flex';
@@ -875,6 +884,7 @@
 
             transferRoomObj = window.Trystero.joinRoom(CONFIG, roomId);
             [transferSend, transferGet] = transferRoomObj.makeAction('transfer');
+            [sendFile, onFileProgress] = transferRoomObj.makeAction('fileTransfer');
 
             if (role === 'sender') {
                 transferRoomObj.onPeerJoin(peerId => {
@@ -907,56 +917,22 @@
             document.getElementById('send-ready-state').style.display = 'none';
             document.getElementById('send-progress-state').style.display = 'block';
 
-            const CHUNK_SIZE = 64 * 1024; // 64KB ensures broad WebRTC compatibility
-
             for (const file of activeSendQueue) {
                 document.getElementById('send-filename').innerText = `Sending: ${file.name}`;
                 updateProgress('send', 0);
-                
-                const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-                
-                // Announce file
-                transferSend({
-                    type: 'file_start',
-                    name: file.name,
-                    size: file.size,
-                    mime: file.type || 'application/octet-stream',
-                    totalChunks: totalChunks
-                }, peerIdForTransfer);
 
-                await new Promise(r => setTimeout(r, 50)); // let receiver prep
+                await sendFile(file, peerIdForTransfer, { name: file.name, mime: file.type || 'application/octet-stream' }, (percent) => {
+                    updateProgress('send', percent * 100);
+                });
 
-                // Stream chunks
-                for (let i = 0; i < totalChunks; i++) {
-                    const start = i * CHUNK_SIZE;
-                    const end = Math.min(start + CHUNK_SIZE, file.size);
-                    const chunk = file.slice(start, end);
-                    const buffer = await chunk.arrayBuffer();
-
-                    transferSend({
-                        type: 'file_chunk',
-                        index: i,
-                        data: buffer
-                    }, peerIdForTransfer);
-
-                    updateProgress('send', ((i + 1) / totalChunks) * 100);
-
-                    // Yield to avoid freezing UI and saturating WebRTC buffers
-                    if (i % 4 === 0) {
-                        await new Promise(r => setTimeout(r, 1)); 
-                    }
-                }
-
-                // Finish
-                transferSend({ type: 'file_end' }, peerIdForTransfer);
                 updateProgress('send', 100);
                 await new Promise(r => setTimeout(r, 500)); 
             }
             
-            document.getElementById('send-filename').innerText = "All files sent!";
+            document.getElementById('send-filename').innerText = "All files sent";
             setTimeout(() => {
                 goHome();
-            }, 2000);
+            }, 10000);
         }
 
         function cancelTransfer() {
@@ -986,77 +962,30 @@
             }
         }
 
-        let incomingFileMeta = null;
-        let incomingChunks = [];
-
         function setupReceiverLogic() {
-            transferGet((payload, peerId) => {
-                if (payload.type === 'file_start') {
-                    incomingFileMeta = payload;
-                    incomingChunks = new Array(payload.totalChunks);
-                    
-                    document.getElementById('receive-status').style.display = 'none';
-                    document.getElementById('receive-progress-container').style.display = 'block';
-                    document.getElementById('receive-filename').innerText = `Receiving: ${payload.name}`;
-                    updateProgress('receive', 0);
-                    document.getElementById('btn-done-receiving').style.display = 'none';
-                    
-                } else if (payload.type === 'file_chunk') {
-                    if (!incomingFileMeta) return;
-                    let chunk = payload.data;
+            onFileProgress((percent, peerId, metadata) => {
+                document.getElementById('receive-status').style.display = 'none';
+                document.getElementById('receive-progress-container').style.display = 'block';
+                document.getElementById('receive-filename').innerText = `Receiving: ${metadata.name || 'File'}`;
+                document.getElementById('btn-done-receiving').style.display = 'none';
+                updateProgress('receive', percent * 100);
+            });
 
-                    if (chunk instanceof ArrayBuffer) {
-                        incomingChunks[payload.index] = chunk;
-                    } else if (ArrayBuffer.isView(chunk)) {
-                        incomingChunks[payload.index] = chunk.buffer;
-                    } else if (chunk && chunk.data) {
-                        // serialized typed array
-                        incomingChunks[payload.index] = new Uint8Array(chunk.data).buffer;
-                    } else {
-                        console.error("Unknown chunk format", chunk);
-                    }
+            transferRoomObj.onFile((blob, peerId, metadata) => {
+                updateProgress('receive', 100);
 
-                    updateProgress(
-                        'receive',
-                        ((payload.index + 1) / incomingFileMeta.totalChunks) * 100
-                    );
-                    
-                } else if (payload.type === 'file_end') {
-                    updateProgress('receive', 100);
-                    
-                    if (incomingChunks.some(c => !c)) {
-                        console.error("Missing chunks");
-                        return;
-                    }
-
-                    const blob = new Blob(incomingChunks, {
-                        type: incomingFileMeta.mime
-                    });
-
-                    console.log(
-                        "Expected:",
-                        incomingFileMeta.size,
-                        "Received:",
-                        blob.size
-                    );
-
-                    const url = URL.createObjectURL(blob);
-                    
-                    // Auto-trigger download
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = incomingFileMeta.name;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    
-                    // Reset
-                    incomingFileMeta = null;
-                    incomingChunks = [];
-                    
-                    document.getElementById('receive-filename').innerText = "File saved successfully.";
-                    document.getElementById('btn-done-receiving').style.display = 'flex';
-                }
+                const url = URL.createObjectURL(blob);
+                
+                // Auto-trigger download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = metadata.name || 'downloaded_file';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                document.getElementById('receive-filename').innerText = "File saved successfully.";
+                document.getElementById('btn-done-receiving').style.display = 'flex';
             });
         }
 
@@ -1068,7 +997,11 @@
         }
 
         function goHome() {
-            // Clean URL params if any
+            const urlParams = new URLSearchParams(window.location.search);
+            // Lock user on current screen if receiving until they refresh
+            if (urlParams.has('code')) {
+                return;
+            }
             if(window.history.replaceState) {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
@@ -1080,17 +1013,19 @@
             const urlParams = new URLSearchParams(window.location.search);
             const receiveCode = urlParams.get('code');
 
+            if (receiveCode) {
+                // Bypass profile setup and lock directly into receive mode
+                showView('view-receive');
+                initTransferRoom(receiveCode, 'receiver');
+                return;
+            }
+
             if (!loadUserProfile()) {
                 showView('view-profile-setup');
                 return;
             }
 
-            if (receiveCode) {
-                showView('view-receive');
-                initTransferRoom(receiveCode, 'receiver');
-            } else {
-                initDiscovery();
-            }
+            initDiscovery();
         }
 
         // Boot
