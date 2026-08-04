@@ -114,22 +114,56 @@
             --overlay-color: var(--dark-overlay);
             --transparent-color: var(--dark-transparent);
             --glass-border: var(--glass-border-dark);
-            --accent: var(--accent-dark);
             --tonal: var(--tonal-dark);
 
             --edge-refraction-filter: grayscale(0);
             --sun-shadow: 0 0 0 0 transparent;
             --sun-shadow-strong: 0 0 0 0 transparent;
 
-            /* Base Hue (Default Purple) */
-            --theme-r: 208;
-            --theme-g: 188;
-            --theme-b: 255;
+            /* Base Hue (Set to AI Assistant Blue initially) */
+            --theme-r: 66;
+            --theme-g: 133;
+            --theme-b: 244;
             --accent: rgb(var(--theme-r), var(--theme-g), var(--theme-b));
-            --color-on-primary: #333333; 
+            --color-on-primary: #ffffff; 
             
             --border-radius-lg: 50px;
             --border-radius-md: 35px;
+        }
+
+        /* 1. System Light/Dark Theme Support */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --background-color: var(--background-color-light);
+                --text-color: var(--text-color-light);
+                --secondary-text-color: var(--secondary-text-color-light);
+                --modal-background: var(--modal-background-light);
+                --modal-transparent: var(--modal-transparent-light);
+                --search-background: var(--search-background-light);
+                --overlay-color: var(--light-overlay);
+                --transparent-color: var(--light-transparent);
+                --glass-border: var(--glass-border-light);
+                --tonal: var(--tonal-light);
+                --color-on-primary: #000000;
+            }
+        }
+
+        /* 2a. System Contrast Support */
+        @media (prefers-contrast: more) {
+            :root {
+                --background-color: #000 !important;
+                --search-background: #333 !important;
+                --text-color: #fff !important;
+                --glass-border: rgba(255, 255, 255, 1) !important;
+            }
+        }
+        @media (prefers-contrast: more) and (prefers-color-scheme: light) {
+            :root {
+                --background-color: #fff !important;
+                --search-background: #eee !important;
+                --text-color: #000 !important;
+                --glass-border: rgba(0, 0, 0, 1) !important;
+            }
         }
 
         @supports (corner-shape: superellipse(1.5)) {
@@ -138,36 +172,26 @@
             }
         }
 
-        body.light-theme {
-            --background-color: var(--background-color-light);
-            --text-color: var(--text-color-light);
-            --secondary-text-color: var(--secondary-text-color-light);
-            --modal-background: var(--modal-background-light);
-            --modal-transparent: var(--modal-transparent-light);
-            --search-background: var(--search-background-light);
-            --overlay-color: var(--light-overlay);
-            --transparent-color: var(--light-transparent);
-            --glass-border: var(--glass-border-light);
-            --tonal: var(--tonal-light);
-            --color-on-primary: #000000;
-        }
-        
-        body.high-contrast {
-            --background-color: #000 !important;
-            --search-background: #333 !important;
-            border: 1px solid #fff;
-        }
-        body.light-theme.high-contrast {
-            --background-color: #fff !important;
-            --search-background: #eee !important;
-            border: 1px solid #000;
-        }
-
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             transition: all 0.3s cubic-bezier(.2, 1.3, .64, 1) !important;
+        }
+
+        /* 2b. System Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+            .radar-ripple {
+                animation: none !important;
+                display: none !important;
+            }
+            .loading-spinner-ind {
+                animation: none !important;
+            }
         }
         
         body {
@@ -698,6 +722,44 @@
         }
 
         // --- Profile Management ---
+        // 3. Extract and Apply UI Colors from Profile Picture
+        function applyThemeColorFromImage(imgEl) {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = imgEl.naturalWidth || imgEl.width || 100;
+                canvas.height = imgEl.naturalHeight || imgEl.height || 100;
+                if (canvas.width === 0 || canvas.height === 0) return;
+                
+                ctx.drawImage(imgEl, 0, 0, canvas.width, canvas.height);
+                const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                let r = 0, g = 0, b = 0, count = 0;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // Ignore highly transparent pixels
+                    if (data[i+3] > 128) {
+                        r += data[i];
+                        g += data[i+1];
+                        b += data[i+2];
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    r = Math.floor(r / count);
+                    g = Math.floor(g / count);
+                    b = Math.floor(b / count);
+                    document.documentElement.style.setProperty('--theme-r', r);
+                    document.documentElement.style.setProperty('--theme-g', g);
+                    document.documentElement.style.setProperty('--theme-b', b);
+                    // Adjust text color based on perceived brightness of the extracted color
+                    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                    document.documentElement.style.setProperty('--color-on-primary', brightness > 128 ? '#000000' : '#ffffff');
+                }
+            } catch(e) {
+                console.error("Could not extract colors from profile picture:", e);
+            }
+        }
+
         function loadUserProfile() {
             const raw = localStorage.getItem('Dropshare_user_profile');
             if (raw) {
@@ -705,6 +767,9 @@
                 if (userProfile.avatar) {
                     document.getElementById('header-avatar').src = userProfile.avatar;
                     document.getElementById('device-avatar').src = userProfile.avatar;
+                    const img = new Image();
+                    img.onload = () => applyThemeColorFromImage(img);
+                    img.src = userProfile.avatar;
                 }
                 return true;
             }
@@ -724,6 +789,7 @@
                         ctx.drawImage(img, 0, 0, 100, 100);
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
                         document.getElementById('profile-avatar-preview').src = dataUrl;
+                        applyThemeColorFromImage(img);
                     }
                     img.src = e.target.result;
                 }
@@ -1047,8 +1113,7 @@
             const longitude = (now.getTimezoneOffset() / 60) * -15;
             let latitude = 40; 
             const sunPosition = SunCalc.getPosition(now, latitude, longitude);
-            const isLightMode = document.body.classList.contains('light-theme');
-            const SHADOW_DISTANCE = 1.0;             
+            const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches;            const SHADOW_DISTANCE = 1.0;             
             let currentSunShadow = ''; 
 
             if (sunPosition.altitude > 0) {
