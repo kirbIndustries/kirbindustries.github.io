@@ -986,10 +986,24 @@
         
         .qr-canvas-wrapper {
             background: #fff;
-            padding: 16px;
-            border-radius: 20px;
+            padding: 12px;
+            border-radius: 28px;
             corner-shape: superellipse(1.5);
-            margin-bottom: 16px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: clamp(200px, 46vw, 250px);
+            height: clamp(200px, 46vw, 250px);
+            aspect-ratio: 1 / 1;
+            box-sizing: border-box;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        #qr-code-canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
         }
 
         /* Modal */
@@ -3978,10 +3992,10 @@
                 new QRious({
                     element: document.getElementById('qr-code-canvas'),
                     value: currentShareUrl,
-                    size: 200,
+                    size: 2000,
                     background: '#ffffff',
                     foreground: '#000000',
-                    padding: 0
+                    padding: 20
                 });
             }
 
@@ -4135,7 +4149,7 @@
                     }
                     const subText = document.getElementById('send-view-sub');
                     evaluateNetworkWarnings(peerId, 'send-network-warning');
-                    if (subText) subText.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">check</span>Recipient connected`;
+                    if (subText) subText.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">check</span>${t('recipient_connected')}`;
 
                     // If PIN 2FA is not in progress or already verified, start queue
                     if (pin2faVerified && activeSendQueue.length > 0) {
