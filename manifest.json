@@ -1,15 +1,15 @@
 {
-  "name": "Waves Remote",
-  "short_name": "Waves",
-  "description": "Remote for Polygol",
-  "id": "polygolwaves",
+  "name": "kirbIndustries Dropshare",
+  "short_name": "Dropshare",
+  "description": "Easy, private, lightweight and fast way to send files over the air.",
+  "id": "kirbindustdrop",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#141317",
   "theme_color": "#141317",
   "orientation": "any",
   "scope": "./",
-  "categories": ["productivity"],
+  "categories": ["productivity", "utilities"],
   "prefer_related_applications": false,
   "icons": [
     {
@@ -23,6 +23,30 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": ["*/*"]
+        }
+      ]
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "accept": {
+        "*/*": [".*"]
+      }
     }
   ]
 }
