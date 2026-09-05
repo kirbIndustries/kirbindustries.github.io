@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
     <script type="module">
-        import { joinRoom, selfId } from 'https://esm.run/trystero';
+        import { joinRoom, selfId } from 'https://esm.sh/trystero@0.15.1/torrent';
         window.Trystero = { joinRoom, selfId };
         window.dispatchEvent(new Event('trystero-ready'));
     </script>
@@ -1910,12 +1910,11 @@
     <script>
         const CONFIG = { 
             appId: 'kirbindust-dropshare',
-            relayUrls: [
-                'wss://relay.damus.io',
-                'wss://nos.lol',
-                'wss://relay.nostr.band',
-                'wss://relay.snort.social',
-                'wss://relay.primal.net'
+            trackerUrls: [
+                'wss://tracker.openwebtorrent.com',
+                'wss://open.ftorrent.com:443/announce',
+                'wss://tracker.files.fm:7073/announce',
+                'wss://tracker.webtorrent.dev'
             ],
             rtcConfig: {
                 iceServers: [
@@ -3576,7 +3575,7 @@
                         if (discoverySend && !isUserBusy() && document.querySelector('.view.active')?.id === 'view-home') {
                             discoverySend({ type: 'hello', profile: userProfile, coords: getSafeTelemetryCoords(), busy: false });
                         }
-                    }, 3000);
+                    }, 3500);
                 }
                 
                 discoveryGet((payload, peerId) => {
