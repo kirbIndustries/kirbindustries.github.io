@@ -707,18 +707,31 @@
             z-index: -1;
         }
 
+        .settings-group {
+            background-color: var(--modal-background);
+            border-radius: 35px;
+            corner-shape: superellipse(1.5);
+            padding: 0;
+            margin-bottom: 12px;
+        }
+
         .settings-row {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 16px;
-            width: 100%;
+            align-items: center;
+            padding: 12px 16px;
+            position: relative;
+            border-bottom: 1.5px solid var(--glass-border);
         }
 
         .settings-section-title {
             font-size: 13px;
             opacity: 0.6;
-            margin: 20px 0 8px 0;
+            font-family: 'Open Runde', sans-serif;
+            font-weight: 600;
+            color: var(--secondary-text-color);
+            margin-bottom: 8px;
+            padding: 12px 0 0 20px;
         }
 
         .send-actions-row {
@@ -1465,6 +1478,13 @@
                     </div>
                     <div class="settings-row">
                         <div style="flex: 1; padding-right: 10px;">
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="gps_discovery_title">GPS Discovery</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="gps_discovery_desc">Discover nearby devices across different networks (5G & Wi-Fi)</div>
+                        </div>
+                        <input type="checkbox" id="setup-setting-gps-discovery" checked onchange="toggleGpsDiscovery(this.checked)">
+                    </div>
+                    <div class="settings-row">
+                        <div style="flex: 1; padding-right: 10px;">
                             <div style="font-weight: 600; font-size: 14px;" data-i18n="security_integrity">SHA-256 Verification</div>
                             <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="verify_repair_row">Enable verification and repairing of sent content</div>
                         </div>
@@ -1690,8 +1710,8 @@
             <span class="material-symbols-rounded" style="opacity:0.5;">chevron_right</span>
         </div>
 
-        <div class="settings-section-title" data-i18n="language_title">Language</div>
-        <div class="card">
+        <div class="settings-group">
+            <div class="settings-section-title" data-i18n="language_title">Language</div>
             <div class="settings-row">
                 <div>
                     <div data-i18n="language_title">Language</div>
@@ -1707,18 +1727,25 @@
             </div>
         </div>
 
-        <div class="settings-section-title" data-i18n="discovery_privacy">Discovery & Privacy</div>
-        <div class="card">
+        <div class="settings-group">
+            <div class="settings-section-title" data-i18n="discovery_privacy">Discovery & Privacy</div>
             <div class="settings-row">
                 <div>
                     <div data-i18n="discovery_row">Allow nearby devices on this network to discover you</div>
                 </div>
                 <input type="checkbox" id="setting-discoverable" checked onchange="toggleDiscoverable(this.checked)">
             </div>
+            <div class="settings-row">
+                <div>
+                    <div data-i18n="gps_discovery_title">GPS Cross-Network Discovery</div>
+                    <div style="font-size:12px; opacity:0.7;" data-i18n="gps_discovery_desc">Discover nearby devices across different networks (5G & Wi-Fi)</div>
+                </div>
+                <input type="checkbox" id="setting-gps-discovery" checked onchange="toggleGpsDiscovery(this.checked)">
+            </div>
         </div>
 
-        <div class="settings-section-title" data-i18n="security_integrity">Security & Integrity</div>
-        <div class="card">
+        <div class="settings-group">
+            <div class="settings-section-title" data-i18n="security_integrity">Security & Integrity</div>
             <div class="settings-row">
                 <div>
                     <div data-i18n="verify_repair_row">Enable verification and repairing of sent content</div>
@@ -1728,15 +1755,17 @@
             </div>
         </div>
 
-        <div class="settings-section-title" data-i18n="about_title">About</div>
-        <div class="card" style="opacity:0.8;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                <span class="material-symbols-rounded" style="color:var(--accent);">shield</span>
-                <span style="font-weight:600;" data-i18n="e2ee_title">End to End Encrypted</span>
-            </div>
-            <div style="font-size:13px; opacity:0.7; line-height:1.4;" data-i18n="e2ee_desc">
-                All data is peer-to-peer. Your files never pass through a cloud server.
-            </div>
+        <div class="settings-group">
+            <div class="settings-section-title" data-i18n="about_title">About</div>
+                <div class="settings-row">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span class="material-symbols-rounded" style="color:var(--accent);">shield</span>
+                    <span style="font-weight:600;" data-i18n="e2ee_title">End to End Encrypted</span>
+                </div>
+                <div style="font-size:13px; opacity:0.7; line-height:1.4;" data-i18n="e2ee_desc">
+                    All data is peer-to-peer. Your files never pass through a cloud server.
+                </div>
+            </div> 
         </div>
     </div>
 
@@ -2025,6 +2054,9 @@
                 sending_ellipsis: "Sending",
                 id_label: "ID: {id}",
                 me_label: "Me",
+                gps_discovery_title: "GPS Cross-Network Discovery",
+                gps_discovery_desc: "Discover nearby devices across different networks (5G & Wi-Fi)",
+                distance_meters: "{dist}m away",
                 warn_mobile: "Transferring on mobile data. Cellular data charges may apply.",
                 warn_data_saver: "Data Saver is enabled on this device.",
                 warn_internet: "Transferring over the Internet (not on the same local Wi-Fi).",
@@ -2166,6 +2198,9 @@
                 sending_ellipsis: "전송 중",
                 id_label: "ID: {id}",
                 me_label: "나",
+                gps_discovery_title: "GPS 교차 네트워크 탐색",
+                gps_discovery_desc: "다른 네트워크(5G 및 Wi-Fi)에 있는 주변 기기도 위치 기반으로 탐색",
+                distance_meters: "{dist}m 거리",
                 warn_mobile: "모바일 데이터로 전송 중입니다. 데이터 요금이 발생할 수 있습니다.",
                 warn_data_saver: "기기에서 데이터 절약 모드가 켜져 있습니다.",
                 warn_internet: "인터넷을 통해 전송 중입니다 (동일한 로컬 Wi-Fi 아님).",
@@ -2307,6 +2342,9 @@
                 sending_ellipsis: "送信中",
                 id_label: "ID: {id}",
                 me_label: "自分",
+                gps_discovery_title: "GPSクロスネットワーク検出",
+                gps_discovery_desc: "異なるネットワーク（5GとWi-Fi）間でも位置情報で近くの端末を検出",
+                distance_meters: "{dist}m先",
                 warn_mobile: "モバイルデータ通信で転送しています。通信量にご注意ください。",
                 warn_data_saver: "データセーバーが有効になっています。",
                 warn_internet: "インターネット経由で転送中（同じローカルWi-Fiではありません）。",
@@ -2448,6 +2486,9 @@
                 sending_ellipsis: "正在发送",
                 id_label: "ID：{id}",
                 me_label: "我",
+                gps_discovery_title: "GPS跨网络发现",
+                gps_discovery_desc: "即使在不同网络（5G与Wi-Fi）下也能通过位置发现附近设备",
+                distance_meters: "相距 {dist}米",
                 warn_mobile: "正在使用移动数据传输，可能会产生流量费用。",
                 warn_data_saver: "设备已开启省流量模式。",
                 warn_internet: "正在通过公网互联网传输（两台设备不在同一局域网 Wi-Fi 下）。",
@@ -2589,6 +2630,9 @@
                 sending_ellipsis: "Enviando",
                 id_label: "ID: {id}",
                 me_label: "Yo",
+                gps_discovery_title: "Detección por GPS entre redes",
+                gps_discovery_desc: "Detecta dispositivos cercanos en redes distintas (5G y Wi-Fi) usando ubicación",
+                distance_meters: "A {dist}m",
                 warn_mobile: "Transfiriendo por datos móviles. Pueden aplicarse cargos de datos.",
                 warn_data_saver: "El modo de ahorro de datos está activo en este dispositivo.",
                 warn_internet: "Transfiriendo por Internet (no están en la misma red Wi-Fi local).",
@@ -2730,6 +2774,9 @@
                 sending_ellipsis: "Wird gesendet",
                 id_label: "ID: {id}",
                 me_label: "Ich",
+                gps_discovery_title: "GPS-Netzwerkübergreifende Erkennung",
+                gps_discovery_desc: "Geräte in der Nähe auch über verschiedene Netzwerke (5G & WLAN) ortsbezogen erkennen",
+                distance_meters: "{dist}m entfernt",
                 warn_mobile: "Übertragung über mobile Daten. Es können Gebühren anfallen.",
                 warn_data_saver: "Datensparmodus ist auf diesem Gerät aktiviert.",
                 warn_internet: "Übertragung über das Internet (nicht im selben lokalen WLAN).",
@@ -2950,6 +2997,106 @@
             }
         }
 
+        // --- Geohash & Spatial Clustering Helpers (with Zero-Leak Safeguards) ---
+        function encodeGeohash(lat, lon, precision = 6) {
+            if (typeof lat !== 'number' || typeof lon !== 'number' || isNaN(lat) || isNaN(lon)) {
+                throw new Error("Invalid coordinates provided to encodeGeohash");
+            }
+            if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                throw new Error("Out-of-bounds coordinates provided to encodeGeohash");
+            }
+            const B32 = '0123456789bcdefghjkmnpqrstuvwxyz';
+            let minLat = -90, maxLat = 90;
+            let minLon = -180, maxLon = 180;
+            let hash = '', isEven = true, bit = 0, ch = 0;
+
+            while (hash.length < precision) {
+                if (isEven) {
+                    const mid = (minLon + maxLon) / 2;
+                    if (lon >= mid) {
+                        ch |= (1 << (4 - bit));
+                        minLon = mid;
+                    } else {
+                        maxLon = mid;
+                    }
+                } else {
+                    const mid = (minLat + maxLat) / 2;
+                    if (lat >= mid) {
+                        ch |= (1 << (4 - bit));
+                        minLat = mid;
+                    } else {
+                        maxLat = mid;
+                    }
+                }
+                isEven = !isEven;
+                if (bit < 4) {
+                    bit++;
+                } else {
+                    hash += B32[ch];
+                    bit = 0;
+                    ch = 0;
+                }
+            }
+            return hash;
+        }
+
+        function getSafeGeohashRoom(coords) {
+            if (!coords || typeof coords.lat !== 'number' || typeof coords.lon !== 'number') return null;
+            try {
+                const hash = encodeGeohash(coords.lat, coords.lon, 6);
+                if (typeof hash === 'string' && hash.length === 6 && /^[0-9bcdefghjkmnpqrstuvwxyz]{6}$/.test(hash)) {
+                    return `kirbIndustries-Dropshare-geo-${hash}`;
+                }
+            } catch (err) {
+                console.warn("[Dropshare] Geohash computation failed. Wiping location data for privacy.", err);
+            }
+            return null;
+        }
+
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Earth radius in meters
+            const toRad = Math.PI / 180;
+            const dLat = (lat2 - lat1) * toRad;
+            const dLon = (lon2 - lon1) * toRad;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
+
+        function calculateBearing(lat1, lon1, lat2, lon2) {
+            const toRad = Math.PI / 180;
+            const y = Math.sin((lon2 - lon1) * toRad) * Math.cos(lat2 * toRad);
+            const x = Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) -
+                      Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos((lon2 - lon1) * toRad);
+            return Math.atan2(y, x); // Radians [-PI, PI]
+        }
+
+        async function acquireGeoPosition() {
+            if (!isGpsDiscoveryEnabled || !navigator.geolocation) return null;
+            try {
+                return await new Promise(resolve => {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => {
+                            if (pos && pos.coords && typeof pos.coords.latitude === 'number' && typeof pos.coords.longitude === 'number' && !isNaN(pos.coords.latitude) && !isNaN(pos.coords.longitude)) {
+                                resolve({
+                                    lat: pos.coords.latitude,
+                                    lon: pos.coords.longitude,
+                                    acc: pos.coords.accuracy || 50
+                                });
+                            } else {
+                                resolve(null);
+                            }
+                        },
+                        () => resolve(null),
+                        { enableHighAccuracy: true, timeout: 3500, maximumAge: 30000 }
+                    );
+                });
+            } catch (e) {
+                return null;
+            }
+        }
+
         // --- Security & Cryptographic Helpers ---
         function generateSecureToken(byteLength = 32) {
             const bytes = new Uint8Array(byteLength);
@@ -3011,7 +3158,10 @@
         let lastReceivedFilename = '';
         let activeSendBufferMap = {}; // Maps filename to ArrayBuffer for repair
         let isDiscoverable = true;
+        let isGpsDiscoveryEnabled = true;
         let isVerifyRepairEnabled = true;
+        let userLocationCoords = null; // { lat, lon, acc }
+        const MAX_GEO_PROXIMITY_METERS = 100; // Filter peers within 100 meters
         const EMOJI_POOL = [
             '🌱', '🌳', '🌵', '🌻', '🍄', '🌊', '🌋', '🏔️', '🏝️', '🏜️',
             '🌌', '🌙', '☀️', '🌈', '⚡️', '❄️', '🌪️', '🔥', '💧', '🪨',
@@ -3329,9 +3479,11 @@
             // Keep settings controls synchronized
             const setupLang = document.getElementById('setup-setting-language');
             const setupDisc = document.getElementById('setup-setting-discoverable');
+            const setupGps = document.getElementById('setup-setting-gps-discovery');
             const setupVer = document.getElementById('setup-setting-verify-repair');
             if (setupLang) setupLang.value = currentLang;
             if (setupDisc) setupDisc.checked = isDiscoverable;
+            if (setupGps) setupGps.checked = isGpsDiscoveryEnabled;
             if (setupVer) setupVer.checked = isVerifyRepairEnabled;
         }
 
@@ -3366,34 +3518,82 @@
         }
 
         // --- Discovery / Radar Logic ---
-        function initDiscovery() {
+        async function initDiscovery() {
             showView('view-home');
             evaluateNetworkWarnings(null, 'home-network-warning');
             if (transferRoomObj) {
                 try { transferRoomObj.leave(); } catch(e){}
                 transferRoomObj = null;
             }
+
+            // Acquire GPS coordinates and verify spatial hash with strict leak prevention
+            let rawCoords = await acquireGeoPosition();
+            let activeDiscoveryRoom = null;
+            let isGeoClusterActive = false;
+
+            if (rawCoords) {
+                const safeGeoRoom = getSafeGeohashRoom(rawCoords);
+                if (safeGeoRoom) {
+                    activeDiscoveryRoom = safeGeoRoom;
+                    isGeoClusterActive = true;
+                    userLocationCoords = rawCoords;
+                } else {
+                    // Fail-safe: if hashing failed or produced an error, immediately wipe coordinates
+                    rawCoords = null;
+                    userLocationCoords = null;
+                    isGeoClusterActive = false;
+                }
+            } else {
+                userLocationCoords = null;
+                isGeoClusterActive = false;
+            }
+
+            // Fallback to local network / domain discovery room if geo hashing is unavailable or failed
+            if (!activeDiscoveryRoom) {
+                activeDiscoveryRoom = DISCOVERY_ROOM;
+                // Zero-Leak Guarantee: strictly nullify location coordinates in standard fallback room
+                userLocationCoords = null;
+                isGeoClusterActive = false;
+            }
+
+            // Helper to ensure coordinates are only ever packaged when in a verified spatial cluster
+            const getSafeTelemetryCoords = () => {
+                if (!isGeoClusterActive || !userLocationCoords) return null;
+                return {
+                    lat: Number(userLocationCoords.lat.toFixed(5)),
+                    lon: Number(userLocationCoords.lon.toFixed(5))
+                };
+            };
             
             if (!discoveryRoomObj) {
-                discoveryRoomObj = window.Trystero.joinRoom(CONFIG, DISCOVERY_ROOM);
+                discoveryRoomObj = window.Trystero.joinRoom(CONFIG, activeDiscoveryRoom);
                 [discoverySend, discoveryGet] = discoveryRoomObj.makeAction('discovery');
 
-                // Periodic heartbeat broadcast so separate physical devices discover each other reliably
+                // Periodic heartbeat broadcast (coordinates stripped unless in verified geo cluster)
                 if (!window._discoveryInterval) {
                     window._discoveryInterval = setInterval(() => {
                         if (discoverySend && !isUserBusy() && document.querySelector('.view.active')?.id === 'view-home') {
-                            discoverySend({ type: 'hello', profile: userProfile, busy: false });
+                            discoverySend({ type: 'hello', profile: userProfile, coords: getSafeTelemetryCoords(), busy: false });
                         }
                     }, 3500);
                 }
                 
                 discoveryGet((payload, peerId) => {
+                    let peerDistance = null;
+                    let peerBearing = null;
+                    if (isGeoClusterActive && userLocationCoords && payload.coords && typeof payload.coords.lat === 'number' && typeof payload.coords.lon === 'number') {
+                        peerDistance = calculateHaversineDistance(userLocationCoords.lat, userLocationCoords.lon, payload.coords.lat, payload.coords.lon);
+                        peerBearing = calculateBearing(userLocationCoords.lat, userLocationCoords.lon, payload.coords.lat, payload.coords.lon);
+                        // Discard peers outside spatial boundary
+                        if (peerDistance > MAX_GEO_PROXIMITY_METERS) return;
+                    }
+
                     if (payload.type === 'hello') {
-                        knownPeers[peerId] = { ...payload.profile, busy: payload.busy || false };
+                        knownPeers[peerId] = { ...payload.profile, distance: peerDistance, bearing: peerBearing, busy: payload.busy || false };
                         renderRadarList();
-                        discoverySend({ type: 'hello_reply', profile: userProfile, busy: isUserBusy() }, peerId);
+                        discoverySend({ type: 'hello_reply', profile: userProfile, coords: getSafeTelemetryCoords(), busy: isUserBusy() }, peerId);
                     } else if (payload.type === 'hello_reply') {
-                        knownPeers[peerId] = { ...payload.profile, busy: payload.busy || false };
+                        knownPeers[peerId] = { ...payload.profile, distance: peerDistance, bearing: peerBearing, busy: payload.busy || false };
                         renderRadarList();
                     } else if (payload.type === 'status_update') {
                         if (knownPeers[peerId]) {
@@ -3429,7 +3629,7 @@
                 });
 
                 discoveryRoomObj.onPeerJoin(peerId => {
-                    discoverySend({ type: 'hello', profile: userProfile }, peerId);
+                    discoverySend({ type: 'hello', profile: userProfile, coords: getSafeTelemetryCoords(), busy: isUserBusy() }, peerId);
                 });
                 
                 discoveryRoomObj.onPeerLeave(peerId => {
@@ -3497,7 +3697,14 @@
 
             const allRadarItems = [
                 ...systemItems,
-                ...activePeerIds.map(id => ({ id, name: sanitizeProfile(knownPeers[id]).name, avatar: sanitizeProfile(knownPeers[id]).avatar, isSpecial: false }))
+                ...activePeerIds.map(id => ({ 
+                    id, 
+                    name: sanitizeProfile(knownPeers[id]).name, 
+                    avatar: sanitizeProfile(knownPeers[id]).avatar, 
+                    distance: knownPeers[id]?.distance,
+                    bearing: knownPeers[id]?.bearing,
+                    isSpecial: false 
+                }))
             ];
 
             let displayItems = [];
@@ -3531,54 +3738,79 @@
                 return h >>> 0;
             };
 
-            // 1. Generate organic anchors scaled to fill measured radar dimensions
+            // Dynamically measure live UI obstacle boundaries to ensure zero overlap
+            const radarRect = radarBox.getBoundingClientRect();
+            const statusEl = document.getElementById('radar-status-text');
+            const warnEl = document.getElementById('home-network-warning');
+            const sendBtn = document.querySelector('#view-home .btn-primary');
+
+            const radarCenterY = radarRect.top + radarRect.height / 2;
+            let topSafeLimit = -boxHeight / 2 + 35;
+            if (statusEl) {
+                const sRect = statusEl.getBoundingClientRect();
+                topSafeLimit = Math.max(topSafeLimit, (sRect.bottom - radarCenterY) + 38);
+            }
+            if (warnEl && warnEl.style.display !== 'none') {
+                const wRect = warnEl.getBoundingClientRect();
+                topSafeLimit = Math.max(topSafeLimit, (wRect.bottom - radarCenterY) + 38);
+            }
+
+            let bottomSafeLimit = boxHeight / 2 - 35;
+            if (sendBtn) {
+                const bRect = sendBtn.getBoundingClientRect();
+                bottomSafeLimit = Math.min(bottomSafeLimit, (bRect.top - radarCenterY) - 38);
+            }
+
+            const maxLateralRadius = Math.max(60, (boxWidth / 2) - 38);
+
+            // 1. Initial balanced seed anchors (spaced organically around the available space)
+            const numItems = displayItems.length;
             const points = displayItems.map((item, idx) => {
-                let x, y;
-                if (item.id === 'system-rooms') {
-                    // Upper-left sector proportionally scaled to current radar size
-                    x = Math.round(Math.cos(-2.356) * MID_RADIUS);
-                    y = Math.round(Math.sin(-2.356) * MID_RADIUS);
-                } else if (item.id === 'system-code') {
-                    // Upper-right sector proportionally scaled to current radar size
-                    x = Math.round(Math.cos(-0.785) * MID_RADIUS);
-                    y = Math.round(Math.sin(-0.785) * MID_RADIUS);
-                } else if (item.id === 'system-more') {
-                    // Lower center
-                    x = 0;
-                    y = Math.round(MAX_RADIUS * 0.95);
-                } else {
-                    const h = hashId(item.id);
-                    const phi = 0.618033988749895;
-                    const spread = ((h * phi + (idx / displayItems.length)) % 1);
-                    const angle = spread * 2 * Math.PI - Math.PI;
-                    const rNorm = ((h >> 8) & 0xFF) / 255;
-                    const r = MIN_RADIUS + rNorm * (MAX_RADIUS - MIN_RADIUS);
-                    x = Math.cos(angle) * r;
-                    y = Math.sin(angle) * r;
-                }
+                const h = hashId(item.id);
+                // Evenly apportion circular sectors with organic deterministic jitter
+                const sectorAngle = (2 * Math.PI * idx / numItems) - (Math.PI / 2);
+                const jitterAngle = (((h % 23) - 11) * Math.PI / 180);
+                const angle = sectorAngle + jitterAngle;
+
+                const rSpread = ((h >> 6) & 0xFF) / 255;
+                const r = MIN_RADIUS + rSpread * (MAX_RADIUS - MIN_RADIUS);
+
+                let x = Math.cos(angle) * r;
+                let y = Math.sin(angle) * r;
+
                 return { id: item.id, x, y };
             });
 
-            // 2. Physics-based force relaxation to fill radar box without overlapping
-            for (let step = 0; step < 45; step++) {
+            // 2. Multi-pass space-filling potential relaxation
+            for (let step = 0; step < 55; step++) {
+                // a. Pairwise bubble repulsion (anti-clump & anti-overlap)
                 for (let i = 0; i < points.length; i++) {
                     for (let j = i + 1; j < points.length; j++) {
                         let dx = points[j].x - points[i].x;
                         let dy = points[j].y - points[i].y;
                         let dist = Math.hypot(dx, dy) || 0.001;
                         if (dist < MIN_DISTANCE) {
-                            const push = (MIN_DISTANCE - dist) * 0.5;
+                            const push = (MIN_DISTANCE - dist) * 0.55;
                             const nx = dx / dist;
                             const ny = dy / dist;
                             points[i].x -= nx * push;
                             points[i].y -= ny * push;
                             points[j].x += nx * push;
                             points[j].y += ny * push;
+                        } else if (dist < MIN_DISTANCE * 1.5) {
+                            // Gentle long-range dispersion to fill empty spaces evenly
+                            const softPush = (MIN_DISTANCE * 1.5 - dist) * 0.05;
+                            const nx = dx / dist;
+                            const ny = dy / dist;
+                            points[i].x -= nx * softPush;
+                            points[i].y -= ny * softPush;
+                            points[j].x += nx * softPush;
+                            points[j].y += ny * softPush;
                         }
                     }
                 }
 
-                // Constrain dynamically to measured box annulus
+                // b. Enforce center core clearance (protect Me avatar) & outer boundaries
                 for (let i = 0; i < points.length; i++) {
                     let r = Math.hypot(points[i].x, points[i].y) || 0.001;
                     if (r < MIN_RADIUS) {
@@ -3587,6 +3819,13 @@
                     } else if (r > MAX_RADIUS) {
                         points[i].x = (points[i].x / r) * MAX_RADIUS;
                         points[i].y = (points[i].y / r) * MAX_RADIUS;
+                    }
+
+                    // Strict vertical & horizontal UI obstacle clamping
+                    if (points[i].y < topSafeLimit) points[i].y = topSafeLimit;
+                    if (points[i].y > bottomSafeLimit) points[i].y = bottomSafeLimit;
+                    if (Math.abs(points[i].x) > maxLateralRadius) {
+                        points[i].x = Math.sign(points[i].x) * maxLateralRadius;
                     }
                 }
             }
@@ -4239,6 +4478,19 @@
             checkAndBroadcastBusyState();
         }
 
+        function toggleGpsDiscovery(enabled) {
+            isGpsDiscoveryEnabled = enabled;
+            // Instantly purge coordinates from memory on disable
+            if (!enabled) {
+                userLocationCoords = null;
+            }
+            if (discoveryRoomObj) {
+                try { discoveryRoomObj.leave(); } catch (e) {}
+                discoveryRoomObj = null;
+            }
+            initDiscovery();
+        }
+
         function toggleVerifyRepair(enabled) {
             isVerifyRepairEnabled = enabled;
         }
@@ -4854,7 +5106,7 @@
                     probeNetworkConditions();
                 });
             }
-            
+
             document.addEventListener('visibilitychange', checkAndBroadcastBusyState);
         }
 
