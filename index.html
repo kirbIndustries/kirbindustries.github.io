@@ -3291,49 +3291,26 @@
             }
         }
 
-        // --- Page Navigation API Integration ---
-        function navigatePage(viewId) {
-            if ('navigation' in window) {
-                try {
-                    window.navigation.navigate('#' + viewId);
-                    return;
-                } catch (e) {}
-            }
-            if (window.history && window.history.pushState) {
-                window.history.pushState({ view: viewId }, '', '#' + viewId);
-            }
-            showView(viewId);
-        }
-
-        function initNavigationAPI() {
-            if ('navigation' in window) {
-                window.navigation.addEventListener('navigate', (event) => {
-                    if (!event.canIntercept) return;
-                    const url = new URL(event.destination.url);
-                    const targetView = url.hash.replace('#', '');
-                    if (targetView && document.getElementById(targetView)) {
-                        event.intercept({
-                            async handler() {
-                                showView(targetView);
-                            }
-                        });
-                    }
-                });
-            }
-            window.addEventListener('popstate', () => {
-                const hash = window.location.hash.replace('#', '');
-                if (hash && document.getElementById(hash)) {
-                    showView(hash);
-                }
-            });
-        }
-
-        function showView(id) {
+        // --- Navigation & Browser Back Button History Support ---
+        function showView(id, pushHistory = true) {
             const urlParams = new URLSearchParams(window.location.search);
             const isReceivingLocked = urlParams.has('code') && id !== 'view-profile-setup';
 
             if (isReceivingLocked && id !== 'view-receive') {
                 return;
+            }
+
+            const currentActive = document.querySelector('.view.active')?.id;
+            if (currentActive === id) return;
+
+            // Push state to browser history stack
+            if (pushHistory && !isReceivingLocked) {
+                const targetHash = '#' + id;
+                if (window.location.hash !== targetHash) {
+                    if (window.history && window.history.pushState) {
+                        window.history.pushState({ view: id }, '', targetHash);
+                    }
+                }
             }
 
             const updateDOM = () => {
@@ -3369,6 +3346,45 @@
             }
 
             checkAndBroadcastBusyState();
+        }
+
+        function navigatePage(viewId) {
+            showView(viewId, true);
+        }
+
+        function initNavigationAPI() {
+            // Handle browser Back / Forward buttons and mobile swipe gestures
+            window.addEventListener('popstate', () => {
+                // 1. Dismiss any open modals on back action
+                const openModals = document.querySelectorAll('.screenshot-modal.open');
+                if (openModals.length > 0) {
+                    openModals.forEach(m => m.classList.remove('open'));
+                }
+
+                // 2. Abort transfer if backing out of active send screen
+                const activeView = document.querySelector('.view.active')?.id;
+                if (activeView === 'view-send') {
+                    cancelTransfer(true);
+                    return;
+                }
+
+                // 3. Restore previous view in history
+                const targetHash = window.location.hash.replace('#', '');
+                if (targetHash && document.getElementById(targetHash)) {
+                    showView(targetHash, false);
+                } else {
+                    if (isUserSetUp()) {
+                        showView('view-home', false);
+                    } else {
+                        showView('view-profile-setup', false);
+                    }
+                }
+            });
+
+            // Set initial history state
+            if (window.location.hash === '' && isUserSetUp()) {
+                window.history.replaceState({ view: 'view-home' }, '', '#view-home');
+            }
         }
 
         // --- Busy State Management ---
@@ -4498,7 +4514,7 @@
                 document.getElementById('settings-avatar-preview').src = userProfile.avatar;
                 document.getElementById('settings-name-display').textContent = userProfile.name;
             }
-            showView('view-settings');
+            navigatePage('view-settings');
         }
 
         function toggleDiscoverable(enabled) {
@@ -4583,7 +4599,7 @@
 
         function openCodeReceive() {
             document.getElementById('receive-pin-input').value = '';
-            showView('view-code');
+            navigatePage('view-code');
         }
 
         async function submitReceivePin() {
@@ -4650,7 +4666,7 @@
         function openRooms() {
             loadSavedRooms();
             renderRoomsList();
-            showView('view-rooms');
+            navigatePage('view-rooms');
         }
 
         function renderRoomsList() {
@@ -4755,7 +4771,7 @@
             document.getElementById('room-chat-lock').textContent = roomObj.password ? 'lock' : 'lock_open';
             document.getElementById('room-chat-status').textContent = t('connecting');
             
-            showView('view-room-chat');
+            navigatePage('view-room-chat');
             loadRoomHistory(roomId);
 
             const inputEl = document.getElementById('room-message-input');
