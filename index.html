@@ -562,7 +562,61 @@
         }
 
         .view.active { display: flex; }
-        
+
+        /* 4-Step Onboarding Styles */
+        .setup-step-container {
+            width: 100%;
+            max-width: 420px;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .setup-step-content {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: popIn 0.3s cubic-bezier(0.2, 1.3, 0.64, 1);
+        }
+
+        .setup-step-content.active {
+            display: flex;
+        }
+
+        .setup-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .setup-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-color);
+            opacity: 0.25;
+            transition: all 0.3s cubic-bezier(.2, 1.3, .64, 1);
+        }
+
+        .setup-dot.active {
+            width: 24px;
+            border-radius: 12px;
+            background: var(--accent);
+            opacity: 1;
+        }
+
+        .setup-nav-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            margin-top: 24px;
+        }
+
         .setup-content {
             flex: 1;
             display: flex;
@@ -692,7 +746,7 @@
 
         .radar-box {
             position: fixed;
-            top: 64px;
+            top: 100px;
             left: 16px;
             right: 16px;
             bottom: 100px;
@@ -717,15 +771,16 @@
             width: 100px; height: 100px;
             top: calc(50% - 50px); left: calc(50% - 50px);
             border-radius: 50%;
-            border: 2px solid var(--accent); opacity: 0;
+            background: radial-gradient(circle,transparent 0%, var(--accent) 100%);
+            opacity: 0;
             animation: ripple 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
             pointer-events: none;
         }
         .radar-ripple:nth-child(2) { animation-delay: 1.25s; }
         
         @keyframes ripple {
-            0% { transform: scale(0.6); opacity: 1; filter: none; }
-            100% { transform: scale(var(--ripple-max-scale, 3.1)); opacity: 0; filter: blur(5px); }
+            0% { transform: scale(0.6); opacity: 0.5; filter: blur(5px); }
+            100% { transform: scale(var(--ripple-max-scale, 3.1)); opacity: 0; filter: blur(10px); }
         }
 
         .radar-peers-container {
@@ -854,6 +909,27 @@
             margin-top: -15px;
             border-radius: 20px;
             box-shadow: var(--sun-shadow);
+        }
+
+        .network-warn-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 170, 0, 0.15);
+            border: 1px solid rgba(255, 170, 0, 0.4);
+            color: var(--text-color);
+            padding: 10px 14px;
+            border-radius: 20px;
+            corner-shape: superellipse(1.5);
+            font-size: 12px;
+            line-height: 1.35;
+            margin: 10px auto;
+            max-width: 360px;
+            width: 100%;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--sun-shadow);
+            animation: popIn 0.3s cubic-bezier(0.2, 1.3, 0.64, 1);
         }
 
         .split-view {
@@ -1266,36 +1342,196 @@
         </div>
     </div>
 
-    <!-- PROFILE SETUP VIEW -->
+    <!-- PROFILE SETUP VIEW (4-PAGE ONBOARDING FLOW) -->
     <div id="view-profile-setup" class="view">
-        <div class="setup-content">
-            <img alt="App Icon" src="favicon.png" style="width: 64px;">
-            <h1 style="margin-top:16px;" data-i18n="welcome_title">Welcome to Dropshare</h1>
-            <p style="opacity: 1;" data-i18n="welcome_desc">kirbIndustries Dropshare is an easy, private, lighweight and fast way to send files over the air.</p>
-            <p style="opacity: 0.7;" data-i18n="welcome_subdesc">Create a profile so others know it's you.</p>
-            
-            <div style="margin: 20px 0; position: relative; width: 100px; height: 100px; margin-left: auto; margin-right: auto;">
-                <img id="profile-avatar-preview" src="data:image/webp;base64,UklGRgoKAABXRUJQVlA4WAoAAAAQAAAAfwAAfwAAQUxQSGUDAAABoLVs29rKeglDyXgoJSwZd9/u7u7u7jbu7j4/YLu7jru7u5YSShkNZfkK5eM9qCXf9z6wDyNiAsjIitvfnvX9xsNpv6Gg7x1e/+2MN291CaFz78SlZxWHrDL/jr2zjWTWtdN2Bhx5w8bRAyyZBs1Jsa7q+JQ+4rR6dbtirdXGF21J3Cln2cD02LgU7rwaNjQ7KyFBm4k1bLA/upVp1vNpNjz1pFk9VrOAi7uYY31YxyLWvG2Ku5TF/DdhxK0ZFjR9s37WpwGLGnxsaRb7nMX9PKZVu5Us8GpHo4rdLPL+Km06HGehT3fRpEOSxfa6adHhJAue6qKBe5xFP1kVWbvdLPx+J6LYShZ/tR2J9TkD/NyKYjBD/DSC2wMMwc2hVWQYpJcIyVrOMP8O6WMG+mYo3eqQZDuEsZqh/hvC8wz20bLapNEk7XImMtzhZVTU4PHjpS1iwNNKcusQZZ1SpjHkkSW0OovJixV7nUE/XWw7qpVFBilUuS6F5jHskQVaeLj2F7iWcaseeTOA8ad5O5EtJ6J4gKzOJrqfod9MNAXbSKLl2P4kOo8tRRUKW865k8Ff+y66l+egm/gzus/Xo1t6EN1uD91pH93FBnRN/L+/gteArslHd9FDd/ogup3r0S3+Ed3ns9CNfxvdi7eju7pCYcu1o7PYkkRLsf1ONBHbUKK7sV1P1K4JWTZGRJuRLSYiGo/s/bzLFa5cpzzrNK7tVHAGrsGF+ilUQYdCtBXVcir6Kqoni7U6iykVK0YTMQ2nEt0aRL5TCs1BNJFKdrN4Ljql0Xg8g6nMNh6ak3Y59Cyah6n85Vj+pBC71SHJVoVBHyJ5lUK1FuP4k0KuyKDwEmHR7QGG4GYKfyiGwRSh9TWCr60oyF4v30aboo0flu5ogqLukJLN60TRd8tIdrYX6dgrLdfZAaRnt6RUXi/StcNBmY52IX3j6yXamCCd7a/l+dYmva2hgSzBYIu0vz0jiXcrmeguluNvl8y03q2RwX+dzO20VII/q8joJ1OmnX6YTG81OmuSP9QmAROzsqb4UxwSMj4+Y4I30iFB7efX5/QKVj5tk7Tdxh9UuuR2Du9AMvcZurYhuprF73chyVvdOvZfT4WlUn+PvNEmhPEbX5327erdSV/lKT+5e+XXE1++3iEjAQBWUDggfgYAABAjAJ0BKoAAgAA+aSySRaQioZi7NjRABoSghwAXrOgLe9F/0nNedUyT37Q5O248xHnJ+cP6VXUzbyrugH//4XN+RLiQfTJTVkDyvfL/et8UoqfvhP1O8Py7n/YXjp5A71j43x9Hj+73yhf84Y7Q4AoRukmMd43RXFeMOz/WlejNRH8XGlnlyly0RJy10YOiwwgV//7Zf63N3Ob/W2hc2vLKuXlcbXJwsWqzKHC/MlrDk3tq9lMmHl7WhJNJ1fzIe7MonaPmFakPuqHq7Ly+ZTysCtLppe9/ahQ31r0B7+pnbKlE6Fd55FE4RPsa29p1o3SDgo4EFgI32qEkYUhFJlqio9KFx6ZJzLwYPS7ft1q9Mbdn9fXMadGvsnzlxk0UMAAA/tkfFn5dFyL7kcW6enx7FP3uowkFjwOchGUQtL/bHQuYm2PYzMEB+v0X5Hzl4vJ/4KUkEgICUf3ALpp04itmtkTWdrXaFD6IcAht7zXERlryS5pFXl0h0/70iHfRV3DflZ5rDr0MYeuXA2CnKk8SOSLqABuy6Ew5ND2qhopzKBR5tL9E3lZ6XcHHrDHihl5BUIzNPGCaqNLke54ynod52QBunAjOnmW4wAhFypWXPZDsawxceN+lv+26kql4C3TDKMfnNw6315t56/FB0lw0TuDSHl9rfCjWf+gGWlJ76u1JAXa32bXD0sLY4ven/ODacxVjijXkBvWRYZNwBHiX6lWydX1vDoD47jwVSQluFgCmFkC158+Nh2dg4Zg03wTDVsU7249nvJg+XuCwTTHS4qkhcAXb7D832Tx2eZfFdtNr0BdNOu+DMgOdEBP6t71vSUm4/AqhGaybZk3YFhIPmpKM1NOzm4y60nM74Nz+77MIqXCL4QXn5yj0UxOWONMSveQt4tMIIugpa+Xtm2sHySGe0a9HeA0sPjLmfa4U6zPpt09GfrSnDliPHtIQGg8WQ/VgDY8d5+oQIeFbAz2ie9wZRMCzgBl7u1uQIPXYwBON8hND2Oqfo3lgBYESTz0m/WhzlC6Ugh6dAm50Y2EuIXE1p/yYRLOJiNUscIjStOshawIWunl8KX4ufaVulGBrx8Tk9Tzb6wV20qfwcH+QBtwCX5dZ4o3oGw4C4G7EprAAuRy7LLLK5N7gmOenYfdwoo6cwBCityZ9QgKWOS72gp6NmFxSxo6weqU1khWLr7BvNxGQVfgbB88gp+TRiSHcScQTVWqJOMwvbjBSbcjmmZZaTzuuJCQ/eGN9PZMzHWwcvUDEGixsoyp7Rl4gfNAnzxME5LK3FuDLF338toTC8m2dqKSuyDS1HTnuXv6EQB1FidDfYWpPxtAKA8ajITaPDIO+OBNUaMhB15qBvGKS5QgaPKBo9N57J8klbvNck+649VZuH5GRDIm8filSSQRrS8ErAL5avQ5TSuysqgnZMkhNXc94MjFjrV9uLXnztcyAopHdEmpma2a5afHBDrxLLIXUhHVYk5yxTDIesgVvHXmgJQthMF4DrZ6BYbFvRYRUrPxA60VMigj/TjGZeUO4B66hj/RPjykO3HV2kLkPppqEYmcDOzynHZDetgPjAQQsI0lCyCSnvK9o2cYqFlbSll0i6OyMgFzPdQV0I6S+Vauq+VrAwqfxj+/v5LhdfaH7exfW3kQw9/Q1oQFmxidW+TH8U84mgzFFwBy3sRGm7pz/QcLBqo/eHrR6pJLcdSkZeN4PdPy40R42RxmU7krieX47ItLdwTlw94DDks/YgTAg5Jswzu/jjQJUfX/fG26e3pDBx+0h6OaJZbUE57jyalNOkAwi737YqrsxRyGZUc8fkgU4XPdncmIXmWYHGCR6q7vfycntPPNlPOGy6kOd0+mtjy8YY6YT33wD615Tf0wLqCeX48nxOjSqiPJXSb72nBM/2+15hdpaBHckXbqZVtAxvyeQbBAnUOBJlIHVH/QvG6z0T2lmYFA7nR/+dhSlIwmKF3nLd80DNSv9bBe55QCR3gcUqc4O4GyTbZkFd9h8881G7Sl7s3pHHjlbZMLbgqxtSys4iJb2crhF0l6aDIZiMqNfEd3Wtf6eeLwIEAkpIpqM/eYzP04RrTFq7E/942Xed44P6qd8N/s9VQlOJWOGZq5DTn8Zn9Ml4CJ+Og7PaOA0Li628PqZvqRbs638f468xmyotQnLht52hToaMQtaOtkdZTQhSy6jYA99PUUBu5/2MGy3sAAAAA==" 
-                     style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--search-background);">
-                <button onclick="document.getElementById('avatar-upload').click()" 
-                        style="position: absolute; bottom: 0; right: 0; background: var(--accent); border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: white;">
-                    <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
+        <div class="setup-step-container">
+            <div id="setup-step-dots" class="setup-dots">
+                <span class="setup-dot active" id="dot-1"></span>
+                <span class="setup-dot" id="dot-2"></span>
+                <span class="setup-dot" id="dot-3"></span>
+                <span class="setup-dot" id="dot-4"></span>
+            </div>
+
+            <!-- Page 1: Welcome & Features -->
+            <div id="setup-step-1" class="setup-step-content active">
+                <img alt="App Icon" src="favicon.png" style="width: 68px; margin-bottom: 12px;">
+                <h1 style="font-size: 26px; margin-bottom: 8px;" data-i18n="setup_step1_title">Welcome to Dropshare</h1>
+                <p style="opacity: 0.75; font-size: 14px; margin-bottom: 20px; line-height: 1.4;" data-i18n="setup_step1_desc">kirbIndustries Dropshare is an easy, private, lightweight and fast way to send files over the air.</p>
+
+                <div class="card" style="width: 100%; text-align: left; display: flex; flex-direction: column; gap: 14px; padding: 18px;">
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <span class="material-symbols-rounded" style="color: var(--accent); font-size: 24px;">bolt</span>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="setup_step1_feat1_title">Direct P2P Speeds</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="setup_step1_feat1_desc">Transfer files at local Wi-Fi speeds directly between devices.</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <span class="material-symbols-rounded" style="color: var(--accent); font-size: 24px;">lock</span>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="setup_step1_feat2_title">Private & E2E Encrypted</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="setup_step1_feat2_desc">Zero cloud storage. Your data never leaves your devices.</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <span class="material-symbols-rounded" style="color: var(--accent); font-size: 24px;">devices</span>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="setup_step1_feat3_title">No App Required</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="setup_step1_feat3_desc">Works seamlessly in any browser on any platform.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px;" data-i18n="language_title">Language</div>
+                    </div>
+                    <select id="setup-setting-language" onchange="setLanguage(this.value)">
+                        <option value="en">English</option>
+                        <option value="ko">한국어</option>
+                        <option value="ja">日本語</option>
+                        <option value="zh">中文</option>
+                        <option value="es">Español</option>
+                        <option value="de">Deutsch</option>
+                    </select>
+                </div>
+
+                <button class="btn-primary" onclick="setSetupStep(2)" style="width: 100%; margin-top: 24px;">
+                    <span data-i18n="setup_get_started_btn">Get Started</span>
+                    <span class="material-symbols-rounded">arrow_forward</span>
                 </button>
             </div>
-            <input type="file" id="avatar-upload" accept="image/*" style="display: none;" onchange="handleAvatarUpload(this)">
 
-            <input type="text" id="profile-name-input" class="code-input" placeholder="Your Name" data-i18n-placeholder="name_placeholder" style="text-align: center; font-family: 'Inter'; letter-spacing: normal; font-size: 18px;">
-            
-            <button class="btn-primary" onclick="saveProfile()" style="margin-top: 20px;">
-                <span data-i18n="continue_btn">Continue</span>
-            </button>
+            <!-- Page 2: Set up Profile -->
+            <div id="setup-step-2" class="setup-step-content">
+                <h1 style="font-size: 24px; margin-bottom: 6px;" data-i18n="setup_step2_title">Set up your profile</h1>
+                <p style="opacity: 0.75; font-size: 14px; margin-bottom: 20px;" data-i18n="setup_step2_desc">Create a profile so others recognize your device on the radar.</p>
+
+                <div style="margin: 10px 0 20px 0; position: relative; width: 104px; height: 104px;">
+                    <img id="profile-avatar-preview" src="data:image/webp;base64,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" 
+                         style="width: 104px; height: 104px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); box-shadow: var(--sun-shadow);">
+                    <button onclick="document.getElementById('avatar-upload').click()" 
+                            style="position: absolute; bottom: 0; right: 0; background: var(--accent); border: 2px solid var(--background-color); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: var(--color-on-primary, var(--background-color)); box-shadow: var(--sun-shadow);">
+                        <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
+                    </button>
+                </div>
+                <input type="file" id="avatar-upload" accept="image/*" style="display: none;" onchange="handleAvatarUpload(this)">
+
+                <input type="text" id="profile-name-input" class="code-input" placeholder="Your Name" data-i18n-placeholder="name_placeholder" style="text-align: center; font-family: 'Inter'; letter-spacing: normal; font-size: 18px; width: 100%; max-width: 320px; margin-bottom: 4px;">
+
+                <div class="setup-nav-row" id="setup-step2-nav">
+                    <button class="btn-primary" onclick="setSetupStep(1)" style="flex: 1; background: var(--search-background); color: var(--text-color); margin: 0;">
+                        <span class="material-symbols-rounded">arrow_back</span>
+                        <span data-i18n="setup_back_btn">Back</span>
+                    </button>
+                    <button class="btn-primary" onclick="setSetupStep(3)" style="flex: 1; margin: 0;">
+                        <span data-i18n="setup_next_btn">Next</span>
+                        <span class="material-symbols-rounded">arrow_forward</span>
+                    </button>
+                </div>
+
+                <!-- Direct Save Button for Edit Mode -->
+                <button id="setup-edit-save-btn" class="btn-primary" onclick="saveProfile()" style="display: none; width: 100%; margin-top: 20px;">
+                    <span class="material-symbols-rounded">check</span>
+                    <span data-i18n="save_btn">Save</span>
+                </button>
+            </div>
+
+            <!-- Page 3: Adjust Settings -->
+            <div id="setup-step-3" class="setup-step-content">
+                <h1 style="font-size: 24px; margin-bottom: 6px;" data-i18n="setup_step3_title">Adjust settings</h1>
+                <p style="opacity: 0.75; font-size: 14px; margin-bottom: 16px;" data-i18n="setup_step3_desc">Customize your language, discovery, and transfer preferences.</p>
+
+                <div class="card" style="width: 100%; display: flex; flex-direction: column; gap: 14px; padding: 18px; text-align: left;">
+                    <div class="settings-row">
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="language_title">Language</div>
+                        </div>
+                        <select id="setup-setting-language" onchange="setLanguage(this.value)">
+                            <option value="en">English</option>
+                            <option value="ko">한국어</option>
+                            <option value="ja">日本語</option>
+                            <option value="zh">中文</option>
+                            <option value="es">Español</option>
+                            <option value="de">Deutsch</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <div style="flex: 1; padding-right: 10px;">
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="discovery_privacy">Nearby Discovery</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="discovery_row">Allow nearby devices on this network to discover you</div>
+                        </div>
+                        <input type="checkbox" id="setup-setting-discoverable" checked onchange="toggleDiscoverable(this.checked)">
+                    </div>
+                    <div class="settings-row">
+                        <div style="flex: 1; padding-right: 10px;">
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="security_integrity">SHA-256 Verification</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="verify_repair_row">Enable verification and repairing of sent content</div>
+                        </div>
+                        <input type="checkbox" id="setup-setting-verify-repair" checked onchange="toggleVerifyRepair(this.checked)">
+                    </div>
+                </div>
+
+                <div class="setup-nav-row">
+                    <button class="btn-primary" onclick="setSetupStep(2)" style="flex: 1; background: var(--search-background); color: var(--text-color); margin: 0;">
+                        <span class="material-symbols-rounded">arrow_back</span>
+                        <span data-i18n="setup_back_btn">Back</span>
+                    </button>
+                    <button class="btn-primary" onclick="setSetupStep(4)" style="flex: 1; margin: 0;">
+                        <span data-i18n="setup_next_btn">Next</span>
+                        <span class="material-symbols-rounded">arrow_forward</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Page 4: Explain How to Use UI -->
+            <div id="setup-step-4" class="setup-step-content">
+                <h1 style="font-size: 24px; margin-bottom: 6px;" data-i18n="setup_step4_title">How to use Dropshare</h1>
+                <p style="opacity: 0.75; font-size: 14px; margin-bottom: 16px;" data-i18n="setup_step4_desc">A quick overview of how everything works.</p>
+
+                <div class="card" style="width: 100%; text-align: left; display: flex; flex-direction: column; gap: 14px; padding: 18px;">
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <span class="material-symbols-rounded" style="color: var(--accent); font-size: 24px;">radar</span>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="setup_step4_guide1_title">Interactive Radar</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="setup_step4_guide1_desc">Nearby devices float as interactive bubbles. Tap any device to send.</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <span class="material-symbols-rounded" style="color: var(--accent); font-size: 24px;">qr_code_2</span>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="setup_step4_guide2_title">QR Code & PIN</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="setup_step4_guide2_desc">Share with anyone across the room with the inverted QR or 6-digit PIN.</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <span class="material-symbols-rounded" style="color: var(--accent); font-size: 24px;">forum</span>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;" data-i18n="setup_step4_guide3_title">Rooms & Messaging</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 2px;" data-i18n="setup_step4_guide3_desc">Tap the Rooms bubble on your radar to chat, poll, and send files in real time.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setup-nav-row">
+                    <button class="btn-primary" onclick="setSetupStep(3)" style="flex: 1; background: var(--search-background); color: var(--text-color); margin: 0;">
+                        <span class="material-symbols-rounded">arrow_back</span>
+                        <span data-i18n="setup_back_btn">Back</span>
+                    </button>
+                    <button class="btn-primary" onclick="saveProfile()" style="flex: 1.4; margin: 0;">
+                        <span data-i18n="setup_finish_btn">Start Sharing</span>
+                        <span class="material-symbols-rounded">check</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- HOME / DISCOVERY VIEW -->
     <div id="view-home" class="view" style="justify-content: space-between;">
-        <div style="text-align:center;">
+        <div style="text-align:center; width: 100%;">
             <p id="radar-status-text" data-i18n="radar_searching" style="opacity: 0.7; font-size:15px; margin: 0; line-height: 1.5;">Searching for nearby people...<br>Keep this screen on and open Dropshare on other devices.</p>
+            <div id="home-network-warning" class="network-warn-banner" style="display:none; margin: 10px auto 0 auto;"></div>
         </div>
 
         <div class="radar-box">
@@ -1303,7 +1539,7 @@
             <div class="radar-ripple"></div>
             <div class="radar-core">
                 <img id="device-avatar" src="">
-                <span class="peer-bubble-name" style="background-color: var(--accent); color: var(--background-color);">Me</span>
+                <span class="peer-bubble-name" style="background-color: var(--accent); color: var(--background-color);" data-i18n="me_label">Me</span>
             </div>
             <div id="radar-peers" class="radar-peers-container"></div>
         </div>
@@ -1341,6 +1577,8 @@
             <p id="send-view-title" data-i18n="sending_content" style="font-family: 'Open Runde', sans-serif; font-size: 20px; font-weight: 700; text-align:center; margin-top:0;">Sending content</p>
             <p id="send-view-sub" style="opacity: 0.7;text-align:center;margin-top:-10px;font-size:14px;display: flex;gap: 6px;align-items: center;"></p>
             
+            <div id="send-network-warning" class="network-warn-banner" style="display:none;"></div>
+
             <input type="file" id="file-input" multiple style="display:none;" onchange="handleFilesSelected(this)">
             
             <div id="send-ready-state" style="width:100%; text-align:center;">
@@ -1382,6 +1620,8 @@
                 <rect width="100%" height="100%" fill="var(--accent)" stroke="none" class="loading-spinner-ind" />
             </svg></p>
             
+            <div id="receive-network-warning" class="network-warn-banner" style="display:none;"></div>
+
             <div id="receive-progress-container" style="display:none; width:100%; max-width: 400px; margin-top: 30px;">
                 <p id="receive-filename" style="font-weight:500; font-size:16px; margin:0 0 6px 0; text-align:left; word-break:break-all;"></p>
                 <p id="receive-verify-badge" style="font-size:12px; opacity:0.8; margin:0 0 10px 0; text-align:left; display:none; color:var(--accent); font-weight:600;"></p>
@@ -1395,11 +1635,38 @@
                 <button class="btn-primary" id="btn-redownload-receiving" onclick="redownloadLastFile()" style="display:none; margin-top:0;">
                     <span class="material-symbols-rounded">download</span> <span data-i18n="redownload_btn">Redownload</span>
                 </button>
-                <button class="btn-primary" id="btn-done-receiving" onclick="goHome(true)" style="display:none; margin-top:0;">
+                <button class="btn-primary" id="btn-done-receiving" onclick="handleDoneReceiving()" style="display:none; margin-top:0;">
                     <span data-i18n="done_btn">Done</span>
                 </button>
                 <button class="icon-btn" id="btn-cancel-receiving" onclick="cancelTransfer()" style="background:transparent; border:none; color:var(--text-color); padding: 12px; border-radius:50%; box-shadow:none;">
                     <span data-i18n="cancel_btn">Cancel</span>
+                </button>
+            </div>
+
+            <!-- Dropwave Features Mini Ad for Guest Receivers -->
+            <div id="receive-dropwave-ad" class="card" style="display:none; width:100%; max-width:340px; margin-top:20px; padding:20px; border-radius:50px; corner-shape:superellipse(1.5); text-align:left; background:var(--search-background); border:1px solid var(--glass-border); box-shadow:var(--sun-shadow);">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <img alt="App Icon" src="favicon.png" style="width: 32px;">
+                    <span style="font-weight:700; font-size:18px;" data-i18n="ad_title">kirbIndustries Dropwave</span>
+                </div>
+                <div style="font-weight:600; font-size:15px; margin-bottom:12px; line-height:1.3;" data-i18n="ad_headline">Experience next-gen wireless transfer</div>
+                <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; opacity:0.8; margin-bottom:16px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="font-size:18px; color:var(--accent);">bolt</span>
+                        <span data-i18n="ad_feature_1">Direct P2P speeds on any device</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="font-size:18px; color:var(--accent);">lock</span>
+                        <span data-i18n="ad_feature_2">Zero cloud & 100% end-to-end encrypted</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="font-size:18px; color:var(--accent);">devices</span>
+                        <span data-i18n="ad_feature_3">No app installation required</span>
+                    </div>
+                </div>
+                <button id="btn-ad-setup-profile" class="btn-primary" onclick="navigatePage('view-profile-setup')" style="display:none; width:100%; height:44px; margin:0; font-size:14px; border-radius:30px;">
+                    <span class="material-symbols-rounded" style="font-size:18px;">account_circle</span>
+                    <span data-i18n="ad_setup_btn">Set up your profile</span>
                 </button>
             </div>
         </div>
@@ -1592,7 +1859,7 @@
             <p style="opacity: 0.7; font-size: 14px; margin-bottom: 16px;" data-i18n="recipient_verify_desc">Show this emoji to the sender.<br>This is to prevent abuse.</p>
             <div id="recipient-target-emoji" style="font-size: 64px; width: 110px; height: 110px; background: var(--search-background); border-radius: 35px; corner-shape: superellipse(1.5); box-shadow: var(--sun-shadow); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">???</div>
             <p style="opacity: 0.6;font-size: 12px;margin-bottom: 8px;display: flex;justify-content: center;align-items: center;gap: 5px;"><svg class="loading-spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;"><rect width="100%" height="100%" fill="var(--accent)" stroke="none" class="loading-spinner-ind" /></svg><span data-i18n="waiting_sender_choose">Waiting for sender to choose...</span></p>
-            <button class="icon-btn" onclick="cancelTransfer()" style="margin: 12px auto 0 auto; background: transparent; border: none; box-shadow: none; color: var(--text-color); opacity: 0.7;"><span data-i18n="cancel_btn">Cancel</span></button>
+            <button id="recipient-modal-cancel-btn" class="icon-btn" onclick="cancelTransfer()" style="margin: 12px auto 0 auto; background: transparent; border: none; box-shadow: none; color: var(--text-color); opacity: 0.7;"><span data-i18n="cancel_btn">Cancel</span></button>
         </div>
     </div>
 
@@ -1616,13 +1883,39 @@
             appId: 'kirbindust-dropshare',
             trackerUrls: [
                 'wss://tracker.openwebtorrent.com',
-                'wss://tracker.btorrent.xyz',
-                'wss://tracker.webtorrent.dev',
-                'wss://tracker.sloppyta.co:443/announce'
-            ]
+                'wss://open.ftorrent.com:443/announce',
+                'wss://tracker.files.fm:7073/announce',
+                'wss://tracker.webtorrent.dev'
+            ],
+            rtcConfig: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun.cloudflare.com:3478' }
+                ]
+            }
         };
 
-        const DISCOVERY_ROOM = window.location.hostname || 'localhost';
+        // Normalize discovery room so different physical devices on LAN or localhost join the same swarm
+        function getDiscoveryRoom() {
+            let host = (window.location.hostname || '').toLowerCase();
+            if (
+                !host ||
+                host === 'localhost' ||
+                host === '127.0.0.1' ||
+                host === '0.0.0.0' ||
+                host.endsWith('.local') ||
+                /^192\.168\./.test(host) ||
+                /^10\./.test(host) ||
+                /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)
+            ) {
+                return 'kirbIndustries-Dropshare-LocalNetwork';
+            }
+            return 'kirbIndustries-Dropshare-' + host.replace(/^www\./, '');
+        }
+
+        const DISCOVERY_ROOM = getDiscoveryRoom();
 
         // --- Internationalization (i18n) ---
         const TRANSLATIONS = {
@@ -1731,6 +2024,41 @@
                 more_count: "More ({count})",
                 sending_ellipsis: "Sending",
                 id_label: "ID: {id}",
+                me_label: "Me",
+                warn_mobile: "Transferring on mobile data. Cellular data charges may apply.",
+                warn_data_saver: "Data Saver is enabled on this device.",
+                warn_internet: "Transferring over the Internet (not on the same local Wi-Fi).",
+                ad_title: "kirbIndustries Dropwave",
+                ad_headline: "Experience next-gen wireless transfer",
+                ad_feature_1: "Direct P2P speeds on any device",
+                ad_feature_2: "Zero cloud & 100% end-to-end encrypted",
+                ad_feature_3: "No app installation required",
+                ad_setup_btn: "Set up your profile",
+                setup_step1_title: "Welcome to Dropshare",
+                setup_step1_desc: "kirbIndustries Dropshare is an easy, private, lightweight and fast way to send files over the air.",
+                setup_step1_feat1_title: "Direct P2P Speeds",
+                setup_step1_feat1_desc: "Transfer files at local Wi-Fi speeds directly between devices.",
+                setup_step1_feat2_title: "Private & E2E Encrypted",
+                setup_step1_feat2_desc: "Zero cloud storage. Your data never leaves your devices.",
+                setup_step1_feat3_title: "No App Required",
+                setup_step1_feat3_desc: "Works seamlessly in any browser on any platform.",
+                setup_get_started_btn: "Get Started",
+                setup_next_btn: "Next",
+                setup_back_btn: "Back",
+                setup_step2_title: "Set up your profile",
+                setup_step2_desc: "Create a profile so others recognize your device on the radar.",
+                setup_step3_title: "Adjust settings",
+                setup_step3_desc: "Customize your language, discovery, and transfer preferences.",
+                setup_step4_title: "How to use Dropshare",
+                setup_step4_desc: "A quick overview of how everything works.",
+                setup_step4_guide1_title: "Interactive Radar",
+                setup_step4_guide1_desc: "Nearby devices float as interactive bubbles. Tap any device to send.",
+                setup_step4_guide2_title: "QR Code & PIN",
+                setup_step4_guide2_desc: "Share with anyone across the room with the inverted QR or 6-digit PIN.",
+                setup_step4_guide3_title: "Rooms & Messaging",
+                setup_step4_guide3_desc: "Tap the Rooms bubble on your radar to chat, poll, and send files in real time.",
+                setup_finish_btn: "Start Sharing",
+                save_btn: "Save",
             },
             ko: {
                                 replying: "답장 중...",
@@ -1837,6 +2165,41 @@
                 more_count: "더 보기 ({count})",
                 sending_ellipsis: "전송 중",
                 id_label: "ID: {id}",
+                me_label: "나",
+                warn_mobile: "모바일 데이터로 전송 중입니다. 데이터 요금이 발생할 수 있습니다.",
+                warn_data_saver: "기기에서 데이터 절약 모드가 켜져 있습니다.",
+                warn_internet: "인터넷을 통해 전송 중입니다 (동일한 로컬 Wi-Fi 아님).",
+                ad_title: "kirbIndustries Dropwave",
+                ad_headline: "차세대 무선 파일 전송을 경험해보세요",
+                ad_feature_1: "모든 기기에서 초고속 직접 P2P 전송",
+                ad_feature_2: "클라우드 없이 100% 종단간 암호화",
+                ad_feature_3: "앱 설치 없이 브라우저에서 바로 사용",
+                ad_setup_btn: "프로필 설정하기",
+                setup_step1_title: "Dropshare에 오신 것을 환영합니다",
+                setup_step1_desc: "kirbIndustries Dropshare는 무선으로 파일을 전송하는 쉽고, 비공개적이며, 가볍고 빠른 방법입니다.",
+                setup_step1_feat1_title: "초고속 직접 P2P 전송",
+                setup_step1_feat1_desc: "기기 간 로컬 Wi-Fi 최고 속도로 직접 전송합니다.",
+                setup_step1_feat2_title: "비공개 및 종단간 암호화",
+                setup_step1_feat2_desc: "클라우드 서버가 없습니다. 파일은 기기 외부로 나가지 않습니다.",
+                setup_step1_feat3_title: "앱 설치 불필요",
+                setup_step1_feat3_desc: "모든 플랫폼의 브라우저에서 바로 작동합니다.",
+                setup_get_started_btn: "시작하기",
+                setup_next_btn: "다음",
+                setup_back_btn: "이전",
+                setup_step2_title: "프로필 설정",
+                setup_step2_desc: "레이더에서 다른 사람이 알아볼 수 있도록 프로필을 만드세요.",
+                setup_step3_title: "설정 조정",
+                setup_step3_desc: "언어, 탐색 및 전송 환경설정을 맞춤설정하세요.",
+                setup_step4_title: "Dropshare 사용법",
+                setup_step4_desc: "주요 기능의 작동 방식을 간단히 확인하세요.",
+                setup_step4_guide1_title: "인터랙티브 레이더",
+                setup_step4_guide1_desc: "주변 기기가 떠다니는 버블로 표시됩니다. 기기를 탭하여 전송하세요.",
+                setup_step4_guide2_title: "QR 코드 및 PIN",
+                setup_step4_guide2_desc: "반전된 QR 코드나 6자리 PIN으로 주변 누구에게나 전송할 수 있습니다.",
+                setup_step4_guide3_title: "방 및 메시지",
+                setup_step4_guide3_desc: "레이더의 방 버블을 탭하여 실시간 채팅, 설문, 파일 전송을 이용하세요.",
+                setup_finish_btn: "공유 시작하기",
+                save_btn: "저장",
             },
             ja: {
                                 replying: "返信中...",
@@ -1943,6 +2306,41 @@
                 more_count: "その他 ({count})",
                 sending_ellipsis: "送信中",
                 id_label: "ID: {id}",
+                me_label: "自分",
+                warn_mobile: "モバイルデータ通信で転送しています。通信量にご注意ください。",
+                warn_data_saver: "データセーバーが有効になっています。",
+                warn_internet: "インターネット経由で転送中（同じローカルWi-Fiではありません）。",
+                ad_title: "kirbIndustries Dropwave",
+                ad_headline: "次世代のワイヤレスファイル転送を体験",
+                ad_feature_1: "あらゆる端末で超高速P2P転送",
+                ad_feature_2: "クラウド不要・100%エンドツーエンド暗号化",
+                ad_feature_3: "アプリのインストール不要",
+                ad_setup_btn: "プロフィールを設定する",
+                setup_step1_title: "Dropshareへようこそ",
+                setup_step1_desc: "kirbIndustries Dropshareは、簡単でプライベート、軽量かつ高速にファイルを送信できる方法です。",
+                setup_step1_feat1_title: "高速ダイレクトP2P転送",
+                setup_step1_feat1_desc: "ローカルWi-Fi速度で端末間を直接転送します。",
+                setup_step1_feat2_title: "プライベート・エンドツーエンド暗号化",
+                setup_step1_feat2_desc: "クラウドサーバーなし。ファイルが端末外に出ることはありません。",
+                setup_step1_feat3_title: "アプリ不要",
+                setup_step1_feat3_desc: "あらゆるプラットフォームのブラウザで直接動作します。",
+                setup_get_started_btn: "はじめる",
+                setup_next_btn: "次へ",
+                setup_back_btn: "戻る",
+                setup_step2_title: "プロフィール設定",
+                setup_step2_desc: "レーダー上で他の人が認識できるようにプロフィールを作成しましょう。",
+                setup_step3_title: "設定の調整",
+                setup_step3_desc: "言語、検出、転送設定をカスタマイズします。",
+                setup_step4_title: "Dropshareの使い方",
+                setup_step4_desc: "主な機能の簡単な概要です。",
+                setup_step4_guide1_title: "インタラクティブ・レーダー",
+                setup_step4_guide1_desc: "近くの端末がバブルとして浮かびます。タップして即座に送信できます。",
+                setup_step4_guide2_title: "QRコードとPIN",
+                setup_step4_guide2_desc: "反転QRコードや6桁のPINコードで簡単に共有できます。",
+                setup_step4_guide3_title: "ルームとメッセージ",
+                setup_step4_guide3_desc: "レーダーのルームバブルをタップしてリアルタイムチャットやファイル共有を利用できます。",
+                setup_finish_btn: "共有を開始する",
+                save_btn: "保存",
             },
             zh: {
                                 replying: "正在回复...",
@@ -2049,6 +2447,41 @@
                 more_count: "更多 ({count})",
                 sending_ellipsis: "正在发送",
                 id_label: "ID：{id}",
+                me_label: "我",
+                warn_mobile: "正在使用移动数据传输，可能会产生流量费用。",
+                warn_data_saver: "设备已开启省流量模式。",
+                warn_internet: "正在通过公网互联网传输（两台设备不在同一局域网 Wi-Fi 下）。",
+                ad_title: "kirbIndustries Dropwave",
+                ad_headline: "体验下一代无线文件传输",
+                ad_feature_1: "全平台超高速点对点传输",
+                ad_feature_2: "无需云端，100% 端到端加密",
+                ad_feature_3: "无需安装任何应用",
+                ad_setup_btn: "设置您的个人资料",
+                setup_step1_title: "欢迎使用 Dropshare",
+                setup_step1_desc: "kirbIndustries Dropshare 是一种简单、私密、轻量且快速的无线文件传输方式。",
+                setup_step1_feat1_title: "高速点对点直连",
+                setup_step1_feat1_desc: "利用局域网 Wi-Fi 全速在设备之间直接传输。",
+                setup_step1_feat2_title: "私密且端到端加密",
+                setup_step1_feat2_desc: "无需云端存储，你的文件绝不会离开你的设备。",
+                setup_step1_feat3_title: "无需安装应用",
+                setup_step1_feat3_desc: "支持任意平台的现代浏览器即开即用。",
+                setup_get_started_btn: "开始体验",
+                setup_next_btn: "下一步",
+                setup_back_btn: "返回",
+                setup_step2_title: "设置个人资料",
+                setup_step2_desc: "创建个人资料，以便雷达上的其他设备识别你。",
+                setup_step3_title: "调整设置",
+                setup_step3_desc: "自定义语言、发现模式及安全首选项。",
+                setup_step4_title: "如何使用 Dropshare",
+                setup_step4_desc: "快速了解主要功能与操作方式。",
+                setup_step4_guide1_title: "交互式雷达",
+                setup_step4_guide1_desc: "附近设备将以浮动气泡的形式出现，点击任意设备即可发送。",
+                setup_step4_guide2_title: "二维码与 PIN 码",
+                setup_step4_guide2_desc: "支持反向二维码扫描或输入 6 位 PIN 码便捷接收。",
+                setup_step4_guide3_title: "房间与即时消息",
+                setup_step4_guide3_desc: "点击雷达上的房间气泡，加入群聊、发起投票并传输文件。",
+                setup_finish_btn: "开始分享",
+                save_btn: "保存",
             },
             es: {
                                 replying: "Respondiendo...",
@@ -2155,6 +2588,41 @@
                 more_count: "Más ({count})",
                 sending_ellipsis: "Enviando",
                 id_label: "ID: {id}",
+                me_label: "Yo",
+                warn_mobile: "Transfiriendo por datos móviles. Pueden aplicarse cargos de datos.",
+                warn_data_saver: "El modo de ahorro de datos está activo en este dispositivo.",
+                warn_internet: "Transfiriendo por Internet (no están en la misma red Wi-Fi local).",
+                ad_title: "kirbIndustries Dropwave",
+                ad_headline: "Prueba la transferencia inalámbrica de última generación",
+                ad_feature_1: "Velocidad P2P directa en cualquier dispositivo",
+                ad_feature_2: "Sin nube y 100% cifrado de extremo a端",
+                ad_feature_3: "Sin necesidad de instalar aplicaciones",
+                ad_setup_btn: "Configurar tu perfil",
+                setup_step1_title: "Bienvenido a Dropshare",
+                setup_step1_desc: "kirbIndustries Dropshare es una forma fácil, privada, ligera y rápida de enviar archivos de forma inalámbrica.",
+                setup_step1_feat1_title: "Velocidades P2P directas",
+                setup_step1_feat1_desc: "Transfiere a máxima velocidad Wi-Fi local directamente entre dispositivos.",
+                setup_step1_feat2_title: "Privado y cifrado E2E",
+                setup_step1_feat2_desc: "Sin servidores en la nube. Tus datos nunca salen de tus dispositivos.",
+                setup_step1_feat3_title: "Sin instalación",
+                setup_step1_feat3_desc: "Funciona sin problemas en cualquier navegador y plataforma.",
+                setup_get_started_btn: "Empezar",
+                setup_next_btn: "Siguiente",
+                setup_back_btn: "Atrás",
+                setup_step2_title: "Configura tu perfil",
+                setup_step2_desc: "Crea un perfil para que otros reconozcan tu dispositivo en el radar.",
+                setup_step3_title: "Ajustar configuración",
+                setup_step3_desc: "Personaliza tus preferencias de idioma, detección y seguridad.",
+                setup_step4_title: "Cómo usar Dropshare",
+                setup_step4_desc: "Un vistazo rápido de cómo funciona todo.",
+                setup_step4_guide1_title: "Radar interactivo",
+                setup_step4_guide1_desc: "Los dispositivos cercanos flotan como burbujas. Toca cualquiera para enviar.",
+                setup_step4_guide2_title: "Código QR y PIN",
+                setup_step4_guide2_desc: "Comparte con el código QR invertido o un PIN rápido de 6 dígitos.",
+                setup_step4_guide3_title: "Salas y mensajería",
+                setup_step4_guide3_desc: "Toca la burbuja de salas en tu radar para chatear, hacer encuestas y enviar archivos.",
+                setup_finish_btn: "Comenzar a compartir",
+                save_btn: "Guardar",
             },
             de: {
                                 replying: "Antworten...",
@@ -2261,6 +2729,41 @@
                 more_count: "Mehr ({count})",
                 sending_ellipsis: "Wird gesendet",
                 id_label: "ID: {id}",
+                me_label: "Ich",
+                warn_mobile: "Übertragung über mobile Daten. Es können Gebühren anfallen.",
+                warn_data_saver: "Datensparmodus ist auf diesem Gerät aktiviert.",
+                warn_internet: "Übertragung über das Internet (nicht im selben lokalen WLAN).",
+                ad_title: "kirbIndustries Dropwave",
+                ad_headline: "Erlebe drahtlose Dateiübertragung der nächsten Generation",
+                ad_feature_1: "Direkte P2P-Geschwindigkeit auf jedem Gerät",
+                ad_feature_2: "Ohne Cloud & 100% Ende-zu-Ende-verschlüsselt",
+                ad_feature_3: "Keine App-Installation erforderlich",
+                ad_setup_btn: "Profil einrichten",
+                setup_step1_title: "Willkommen bei Dropshare",
+                setup_step1_desc: "kirbIndustries Dropshare ist eine einfache, private, leichte und schnelle Möglichkeit, Dateien drahtlos zu senden.",
+                setup_step1_feat1_title: "Direkte P2P-Geschwindigkeit",
+                setup_step1_feat1_desc: "Dateien mit voller lokaler WLAN-Geschwindigkeit direkt übertragen.",
+                setup_step1_feat2_title: "Privat & Ende-zu-Ende-verschlüsselt",
+                setup_step1_feat2_desc: "Keine Cloud-Server. Deine Daten verlassen niemals deine Geräte.",
+                setup_step1_feat3_title: "Keine App erforderlich",
+                setup_step1_feat3_desc: "Funktioniert nahtlos in jedem Browser auf jeder Plattform.",
+                setup_get_started_btn: "Loslegen",
+                setup_next_btn: "Weiter",
+                setup_back_btn: "Zurück",
+                setup_step2_title: "Profil einrichten",
+                setup_step2_desc: "Erstelle ein Profil, damit andere dich auf dem Radar erkennen.",
+                setup_step3_title: "Einstellungen anpassen",
+                setup_step3_desc: "Passe Sprache, Erkennungsmodus und Übertragungseinstellungen an.",
+                setup_step4_title: "So funktioniert Dropshare",
+                setup_step4_desc: "Kurzer Überblick über die wichtigsten Funktionen.",
+                setup_step4_guide1_title: "Interaktives Radar",
+                setup_step4_guide1_desc: "Geräte in der Nähe schweben als Blasen. Zum Senden einfach antippen.",
+                setup_step4_guide2_title: "QR-Code & PIN",
+                setup_step4_guide2_desc: "Mit dem umgedrehten QR-Code oder der 6-stelligen PIN direkt übertragen.",
+                setup_step4_guide3_title: "Räume & Nachrichten",
+                setup_step4_guide3_desc: "Tippe auf die Raum-Blase für Echtzeit-Chat, Umfragen und Dateitransfer.",
+                setup_finish_btn: "Jetzt teilen",
+                save_btn: "Speichern",
             }
         };
 
@@ -2324,6 +2827,127 @@
             currentLang = lang;
             try { localStorage.setItem('dropshare_lang', lang); } catch (e) {}
             applyStaticTranslations();
+            const setupLangSelect = document.getElementById('setup-setting-language');
+            if (setupLangSelect) setupLangSelect.value = currentLang;
+            refreshAllNetworkWarnings();
+        }
+
+        // --- Network Condition Monitoring ---
+        let cachedNetworkInfo = { isCellular: false, isSaveData: false };
+
+        async function probeNetworkConditions() {
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            let isCellular = Boolean(conn && (conn.type === 'cellular' || conn.type === 'wimax'));
+            let isSaveData = Boolean(conn && conn.saveData);
+
+            // Heuristic for mobile devices reporting mobile data network latency/tiers
+            const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+            if (!isCellular && conn && isMobileDevice) {
+                if (conn.type === 'cellular' || conn.effectiveType === '2g' || conn.effectiveType === '3g' || conn.effectiveType === 'slow-2g') {
+                    isCellular = true;
+                }
+            }
+
+            // Inspect WebRTC interface adapter & Carrier-Grade NAT (CGNAT) addressing
+            try {
+                const pc = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+                pc.createDataChannel('net_probe');
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                await new Promise(resolve => {
+                    const timer = setTimeout(resolve, 600);
+                    pc.onicecandidate = (e) => {
+                        if (!e.candidate) {
+                            clearTimeout(timer);
+                            resolve();
+                        }
+                    };
+                });
+
+                const stats = await pc.getStats();
+                stats.forEach(report => {
+                    if (report.type === 'local-candidate') {
+                        if (report.networkType === 'cellular') {
+                            isCellular = true;
+                        }
+                        const addr = report.address || report.ip || '';
+                        // RFC 6598 Carrier-Grade NAT (100.64.0.0/10) utilized by mobile cellular carriers
+                        if (/^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\./.test(addr)) {
+                            isCellular = true;
+                        }
+                    }
+                });
+                pc.close();
+            } catch (e) {}
+
+            cachedNetworkInfo = { isCellular, isSaveData };
+            refreshAllNetworkWarnings();
+        }
+
+        function refreshAllNetworkWarnings() {
+            evaluateNetworkWarnings(null, 'home-network-warning');
+            evaluateNetworkWarnings(peerIdForTransfer, 'send-network-warning');
+            evaluateNetworkWarnings(peerIdForTransfer, 'receive-network-warning');
+        }
+
+        async function evaluateNetworkWarnings(peerId, targetElementId) {
+            const el = document.getElementById(targetElementId);
+            if (!el) return;
+
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            let isCellular = cachedNetworkInfo.isCellular || Boolean(conn && conn.type === 'cellular');
+            let isSaveData = cachedNetworkInfo.isSaveData || Boolean(conn && conn.saveData);
+
+            let isInternetRoute = false;
+            if (peerId && transferRoomObj && typeof transferRoomObj.getPeers === 'function') {
+                try {
+                    const peers = transferRoomObj.getPeers();
+                    const pObj = peers[peerId];
+                    const pc = pObj && (pObj._pc || pObj.pc || (pObj instanceof RTCPeerConnection ? pObj : null));
+                    if (pc && typeof pc.getStats === 'function') {
+                        const stats = await pc.getStats();
+                        stats.forEach(report => {
+                            if (report.type === 'candidate-pair' && (report.state === 'succeeded' || report.nominated || (report.bytesSent && report.bytesSent > 0))) {
+                                const localCand = stats.get(report.localCandidateId);
+                                const remoteCand = stats.get(report.remoteCandidateId);
+                                if (localCand && remoteCand) {
+                                    if (localCand.candidateType !== 'host' || remoteCand.candidateType !== 'host') {
+                                        isInternetRoute = true;
+                                    }
+                                    if (localCand.networkType === 'cellular' || remoteCand.networkType === 'cellular') {
+                                        isCellular = true;
+                                    }
+                                    const lAddr = localCand.address || localCand.ip || '';
+                                    const rAddr = remoteCand.address || remoteCand.ip || '';
+                                    if (/^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\./.test(lAddr) ||
+                                        /^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\./.test(rAddr)) {
+                                        isCellular = true;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {}
+            }
+
+            const messages = [];
+            if (isCellular) messages.push(t('warn_mobile'));
+            if (isSaveData) messages.push(t('warn_data_saver'));
+            if (isInternetRoute && !isCellular) messages.push(t('warn_internet'));
+
+            if (messages.length > 0) {
+                el.innerHTML = `
+                    <span class="material-symbols-rounded" style="color: #ffaa00; font-size: 20px; flex-shrink: 0;">warning</span>
+                    <div style="flex: 1;">${messages.join('<br>')}</div>
+                `;
+                el.style.display = 'flex';
+            } else {
+                el.style.display = 'none';
+                el.innerHTML = '';
+            }
         }
 
         // --- Security & Cryptographic Helpers ---
@@ -2453,9 +3077,82 @@
             document.getElementById('loading-toast').classList.remove('show');
         }
 
+        function isUserSetUp() {
+            if (!userProfile) {
+                loadUserProfile();
+            }
+            return Boolean(userProfile && userProfile.name);
+        }
+
+        let isReceiveComplete = false;
+
+        function updateReceiverGuestUI(isComplete = false) {
+            if (isComplete !== undefined) isReceiveComplete = Boolean(isComplete);
+            const isSetUp = isUserSetUp();
+            const cancelBtn = document.getElementById('btn-cancel-receiving');
+            const adCard = document.getElementById('receive-dropwave-ad');
+            const setupBtn = document.getElementById('btn-ad-setup-profile');
+            const modalCancelBtn = document.getElementById('recipient-modal-cancel-btn');
+
+            if (!isSetUp) {
+                // User has NOT set up a profile: show ad, hide all cancel buttons
+                if (cancelBtn) cancelBtn.style.display = 'none';
+                if (modalCancelBtn) modalCancelBtn.style.display = 'none';
+                if (adCard) adCard.style.display = 'block';
+                if (setupBtn) {
+                    setupBtn.style.display = isReceiveComplete ? 'flex' : 'none';
+                }
+            } else {
+                // User HAS set up a profile: never show ad or setup button; show cancel button while in progress
+                if (adCard) adCard.style.display = 'none';
+                if (setupBtn) setupBtn.style.display = 'none';
+                if (modalCancelBtn) modalCancelBtn.style.display = 'inline-flex';
+                if (cancelBtn) {
+                    cancelBtn.style.display = isReceiveComplete ? 'none' : 'inline-flex';
+                }
+            }
+        }
+
+        // --- Page Navigation API Integration ---
+        function navigatePage(viewId) {
+            if ('navigation' in window) {
+                try {
+                    window.navigation.navigate('#' + viewId);
+                    return;
+                } catch (e) {}
+            }
+            if (window.history && window.history.pushState) {
+                window.history.pushState({ view: viewId }, '', '#' + viewId);
+            }
+            showView(viewId);
+        }
+
+        function initNavigationAPI() {
+            if ('navigation' in window) {
+                window.navigation.addEventListener('navigate', (event) => {
+                    if (!event.canIntercept) return;
+                    const url = new URL(event.destination.url);
+                    const targetView = url.hash.replace('#', '');
+                    if (targetView && document.getElementById(targetView)) {
+                        event.intercept({
+                            async handler() {
+                                showView(targetView);
+                            }
+                        });
+                    }
+                });
+            }
+            window.addEventListener('popstate', () => {
+                const hash = window.location.hash.replace('#', '');
+                if (hash && document.getElementById(hash)) {
+                    showView(hash);
+                }
+            });
+        }
+
         function showView(id) {
             const urlParams = new URLSearchParams(window.location.search);
-            const isReceivingLocked = urlParams.has('code');
+            const isReceivingLocked = urlParams.has('code') && id !== 'view-profile-setup';
 
             if (isReceivingLocked && id !== 'view-receive') {
                 return;
@@ -2472,6 +3169,15 @@
                     appBar.style.display = 'none';
                 } else {
                     appBar.style.display = 'flex';
+                }
+
+                if (id === 'view-receive') {
+                    updateReceiverGuestUI();
+                    evaluateNetworkWarnings(peerIdForTransfer, 'receive-network-warning');
+                } else if (id === 'view-home') {
+                    evaluateNetworkWarnings(null, 'home-network-warning');
+                } else if (id === 'view-send') {
+                    evaluateNetworkWarnings(peerIdForTransfer, 'send-network-warning');
                 }
             };
 
@@ -2586,6 +3292,49 @@
             }
         }
 
+        let currentSetupStep = 1;
+
+        function setSetupStep(step, isEdit = false) {
+            if (step > 2 && !isEdit) {
+                const nameInput = document.getElementById('profile-name-input');
+                if (!nameInput || !nameInput.value.trim()) {
+                    alert(t('please_enter_name'));
+                    setSetupStep(2, isEdit);
+                    return;
+                }
+            }
+
+            currentSetupStep = step;
+            for (let s = 1; s <= 4; s++) {
+                const stepEl = document.getElementById(`setup-step-${s}`);
+                const dotEl = document.getElementById(`dot-${s}`);
+                if (stepEl) stepEl.classList.toggle('active', s === step);
+                if (dotEl) dotEl.classList.toggle('active', s === step);
+            }
+
+            const dotsContainer = document.getElementById('setup-step-dots');
+            const step2Nav = document.getElementById('setup-step2-nav');
+            const editSaveBtn = document.getElementById('setup-edit-save-btn');
+
+            if (isEdit) {
+                if (dotsContainer) dotsContainer.style.display = 'none';
+                if (step2Nav) step2Nav.style.display = 'none';
+                if (editSaveBtn) editSaveBtn.style.display = 'flex';
+            } else {
+                if (dotsContainer) dotsContainer.style.display = 'flex';
+                if (step2Nav) step2Nav.style.display = 'flex';
+                if (editSaveBtn) editSaveBtn.style.display = 'none';
+            }
+
+            // Keep settings controls synchronized
+            const setupLang = document.getElementById('setup-setting-language');
+            const setupDisc = document.getElementById('setup-setting-discoverable');
+            const setupVer = document.getElementById('setup-setting-verify-repair');
+            if (setupLang) setupLang.value = currentLang;
+            if (setupDisc) setupDisc.checked = isDiscoverable;
+            if (setupVer) setupVer.checked = isVerifyRepairEnabled;
+        }
+
         function saveProfile() {
             const nameInput = document.getElementById('profile-name-input');
             const avatarImg = document.getElementById('profile-avatar-preview');
@@ -2594,6 +3343,7 @@
             
             if (!name) {
                 alert(t('please_enter_name'));
+                setSetupStep(2);
                 return;
             }
         
@@ -2603,6 +3353,7 @@
             document.getElementById('device-avatar').src = avatar;
             
             checkInitState();
+            goHome(true);
         }
         
         function editProfile() {
@@ -2610,12 +3361,14 @@
                 document.getElementById('profile-name-input').value = userProfile.name;
                 document.getElementById('profile-avatar-preview').src = userProfile.avatar;
             }
+            setSetupStep(2, true);
             showView('view-profile-setup');
         }
 
         // --- Discovery / Radar Logic ---
         function initDiscovery() {
             showView('view-home');
+            evaluateNetworkWarnings(null, 'home-network-warning');
             if (transferRoomObj) {
                 try { transferRoomObj.leave(); } catch(e){}
                 transferRoomObj = null;
@@ -2624,6 +3377,15 @@
             if (!discoveryRoomObj) {
                 discoveryRoomObj = window.Trystero.joinRoom(CONFIG, DISCOVERY_ROOM);
                 [discoverySend, discoveryGet] = discoveryRoomObj.makeAction('discovery');
+
+                // Periodic heartbeat broadcast so separate physical devices discover each other reliably
+                if (!window._discoveryInterval) {
+                    window._discoveryInterval = setInterval(() => {
+                        if (discoverySend && !isUserBusy() && document.querySelector('.view.active')?.id === 'view-home') {
+                            discoverySend({ type: 'hello', profile: userProfile, busy: false });
+                        }
+                    }, 3500);
+                }
                 
                 discoveryGet((payload, peerId) => {
                     if (payload.type === 'hello') {
@@ -2923,6 +3685,7 @@
             showView('view-send');
             transferCancelled = false;
             targetPeerIdForTransfer = targetPeerId;
+            evaluateNetworkWarnings(targetPeerId, 'send-network-warning');
             document.getElementById('send-ready-state').style.display = 'block';
             document.getElementById('send-progress-state').style.display = 'none';
             
@@ -3031,7 +3794,8 @@
         }
 
         function initTransferRoom(roomId, role, roomKey = null, isPinMode = false) {
-            if (discoveryRoomObj) {
+            // Keep discovery room alive while waiting for approval from nearby device
+            if (discoveryRoomObj && !targetPeerIdForTransfer) {
                 try { discoveryRoomObj.leave(); } catch(e){}
                 discoveryRoomObj = null;
             }
@@ -3126,7 +3890,12 @@
                     }
                     hideLoading();
                     peerIdForTransfer = peerId;
+                    if (discoveryRoomObj) {
+                        try { discoveryRoomObj.leave(); } catch(e){}
+                        discoveryRoomObj = null;
+                    }
                     const subText = document.getElementById('send-view-sub');
+                    evaluateNetworkWarnings(peerId, 'send-network-warning');
                     if (subText) subText.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">check</span>Recipient connected`;
 
                     // If PIN 2FA is not in progress or already verified, start queue
@@ -3147,6 +3916,7 @@
                 transferRoomObj.onPeerJoin(peerId => {
                     if (peerIdForTransfer && peerIdForTransfer !== peerId) return;
                     peerIdForTransfer = peerId;
+                    evaluateNetworkWarnings(peerId, 'receive-network-warning');
 
                     if (isPinMode) {
                         // Start PIN 2FA: Pick target emoji and 3 random distractors
@@ -3243,6 +4013,7 @@
 
         function cancelTransfer(notifyPeer = true) {
             transferCancelled = true;
+            isReceiveComplete = false;
             activeSendBufferMap = {};
             hideLoading();
             document.getElementById('sender-emoji-modal').classList.remove('open');
@@ -3345,7 +4116,7 @@
                 }
                 document.getElementById('btn-done-receiving').style.display = 'none';
                 document.getElementById('btn-redownload-receiving').style.display = 'none';
-                document.getElementById('btn-cancel-receiving').style.display = 'inline-flex';
+                updateReceiverGuestUI(false);
 
                 const progressVal = (typeof percent === 'number' && !isNaN(percent)) ? percent * 100 : 0;
                 updateProgress('receive', progressVal);
@@ -3410,9 +4181,17 @@
             redownloadLastFile();
 
             document.getElementById('receive-filename').textContent = t('file_transferred');
-            document.getElementById('btn-cancel-receiving').style.display = 'none'; // No cancel button after completion
             document.getElementById('btn-done-receiving').style.display = 'flex';
             document.getElementById('btn-redownload-receiving').style.display = 'flex';
+            updateReceiverGuestUI(true);
+        }
+
+        function handleDoneReceiving() {
+            if (!isUserSetUp()) {
+                setSetupStep(1, false);
+                showView('view-profile-setup');
+                return;
+            }
         }
 
         function redownloadLastFile() {
@@ -3435,6 +4214,7 @@
         }
 
         function goHome(force = false) {
+            isReceiveComplete = false;
             const urlParams = new URLSearchParams(window.location.search);
             if (!force && urlParams.has('code')) {
                 return;
@@ -3547,6 +4327,7 @@
                 hideLoading();
                 pinSyncRoom.leave();
                 showView('view-receive');
+                evaluateNetworkWarnings(null, 'receive-network-warning');
                 initTransferRoom(payload.roomId, 'receiver', payload.key, true);
             });
 
@@ -4042,17 +4823,22 @@
         // --- Init ---
         function checkInitState() {
             applyStaticTranslations();
+            loadUserProfile(); // Always populate profile from storage before evaluating view states
             const urlParams = new URLSearchParams(window.location.search);
             const receiveCode = urlParams.get('code');
             const roomKey = window.location.hash ? window.location.hash.slice(1) : (urlParams.get('k') || null);
 
+            initNavigationAPI();
+
             if (receiveCode) {
                 showView('view-receive');
+                evaluateNetworkWarnings(null, 'receive-network-warning');
                 initTransferRoom(receiveCode, 'receiver', roomKey);
+                updateReceiverGuestUI(false);
                 return;
             }
 
-            if (!loadUserProfile()) {
+            if (!isUserSetUp()) {
                 showView('view-profile-setup');
                 return;
             }
@@ -4061,11 +4847,59 @@
             initPwaShareTarget();
             initRadarObserver();
             
+            probeNetworkConditions();
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (conn && typeof conn.addEventListener === 'function') {
+                conn.addEventListener('change', () => {
+                    probeNetworkConditions();
+                });
+            }
+            
             document.addEventListener('visibilitychange', checkAndBroadcastBusyState);
         }
 
+        async function checkStoredSharedFiles() {
+            if ('caches' in window) {
+                try {
+                    const cache = await caches.open('dropshare-shared-cache');
+                    const requests = await cache.keys();
+                    if (requests.length > 0) {
+                        const files = [];
+                        for (const req of requests) {
+                            const res = await cache.match(req);
+                            if (res) {
+                                const blob = await res.blob();
+                                const filename = req.url.split('/').pop() || 'shared_file';
+                                files.push(new File([blob], decodeURIComponent(filename), { type: blob.type }));
+                                await cache.delete(req);
+                            }
+                        }
+                        if (files.length > 0) {
+                            handleIncomingSharedFiles(files);
+                        }
+                    }
+                } catch (e) {}
+            }
+        }
+
         function initPwaShareTarget() {
-            // 1. Chromium File Handling API (launchQueue)
+            // 1. Register Service Worker for caching and Web Share Target interception
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').catch(err => {
+                    console.warn('[SW] Registration failed:', err);
+                });
+
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data && event.data.action === 'incoming-files' && event.data.files) {
+                        handleIncomingSharedFiles(event.data.files);
+                    }
+                });
+            }
+
+            // 2. Ingest any files queued by the Service Worker from Web Share Target
+            checkStoredSharedFiles();
+
+            // 3. Chromium File Handling API (launchQueue)
             if ('launchQueue' in window && 'files' in LaunchParams.prototype) {
                 launchQueue.setConsumer(async (launchParams) => {
                     if (!launchParams.files || !launchParams.files.length) return;
@@ -4084,16 +4918,7 @@
                 });
             }
 
-            // 2. Service Worker incoming message
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.addEventListener('message', (event) => {
-                    if (event.data && event.data.action === 'incoming-files' && event.data.files) {
-                        handleIncomingSharedFiles(event.data.files);
-                    }
-                });
-            }
-
-            // 3. Native drag-and-drop support
+            // 4. Native drag-and-drop support
             window.addEventListener('dragover', (e) => e.preventDefault());
             window.addEventListener('drop', (e) => {
                 e.preventDefault();
