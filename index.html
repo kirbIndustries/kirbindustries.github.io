@@ -3184,7 +3184,7 @@
         let currentShareUrl = '';
         let lastReceivedBlob = null;
         let lastReceivedFilename = '';
-        let activeSendBufferMap = {}; // Maps filename to ArrayBuffer for repair
+        let activeSendFileMap = {}; // Stores lightweight File handles
         let isDiscoverable = true;
         let isGpsDiscoveryEnabled = true;
         let isVerifyRepairEnabled = true;
@@ -4090,7 +4090,6 @@
             const secureConfig = roomKey ? { ...CONFIG, password: roomKey } : CONFIG;
             transferRoomObj = window.Trystero.joinRoom(secureConfig, roomId);
             [transferSend, transferGet] = transferRoomObj.makeAction('transfer');
-            [sendFile, getFile, onFileProgress] = transferRoomObj.makeAction('fileTransfer');
             const [send2FA, get2FA] = transferRoomObj.makeAction('pin2fa');
 
             let pin2faVerified = !isPinMode && (role === 'receiver'); // QR receiver doesn't require PIN 2FA
@@ -4145,20 +4144,21 @@
                     setTimeout(hideLoading, 2000);
                     cancelTransfer(false);
                 } else if (payload.type === 'repair_request') {
-                    // Sender repairs requested chunk indices
+                    // Stream requested repair chunks on-demand directly from disk
                     const { filename, chunkIndices } = payload;
-                    const buffer = activeSendBufferMap[filename];
-                    if (!buffer || !chunkIndices) return;
+                    const file = activeSendFileMap[filename];
+                    if (!file || !chunkIndices || !Array.isArray(chunkIndices)) return;
                     const CHUNK_SIZE = 64 * 1024;
                     for (const idx of chunkIndices) {
                         const start = idx * CHUNK_SIZE;
-                        const end = Math.min(start + CHUNK_SIZE, buffer.byteLength);
-                        const chunkSlice = buffer.slice(start, end);
+                        const end = Math.min(start + CHUNK_SIZE, file.size);
+                        const slice = file.slice(start, end);
+                        const chunkBuf = await slice.arrayBuffer();
                         transferSend({
                             type: 'repair_chunk',
                             filename: filename,
                             index: idx,
-                            data: new Uint8Array(chunkSlice)
+                            data: new Uint8Array(chunkBuf)
                         }, peerId);
                         await new Promise(r => setTimeout(r, 2));
                     }
@@ -4227,52 +4227,66 @@
         async function processSendQueue() {
             if (activeSendQueue.length === 0 || !peerIdForTransfer) return;
             transferCancelled = false;
-            activeSendBufferMap = {};
+            activeSendFileMap = {};
             
             document.getElementById('send-ready-state').style.display = 'none';
             document.getElementById('send-progress-state').style.display = 'block';
 
             for (const file of activeSendQueue) {
                 if (transferCancelled) return;
+                activeSendFileMap[file.name] = file;
                 document.getElementById('send-filename').innerText = t('sending_file', { name: file.name });
                 updateProgress('send', 0);
 
-                let fileHash = '';
-                let chunkHashes = [];
-                const buffer = await file.arrayBuffer();
-                activeSendBufferMap[file.name] = buffer;
+                const CHUNK_SIZE = 64 * 1024;
+                const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
-                if (isVerifyRepairEnabled) {
-                    fileHash = await computeBufferSha256(buffer);
-                    const CHUNK_SIZE = 64 * 1024;
-                    const totalChunks = Math.ceil(buffer.byteLength / CHUNK_SIZE);
-                    for (let c = 0; c < totalChunks; c++) {
-                        const slice = buffer.slice(c * CHUNK_SIZE, Math.min((c + 1) * CHUNK_SIZE, buffer.byteLength));
-                        chunkHashes.push(await computeBufferSha256(slice));
+                // 1. Send file metadata header immediately without blocking
+                transferSend({
+                    type: 'file_start',
+                    name: file.name,
+                    size: file.size,
+                    mime: file.type || 'application/octet-stream',
+                    totalChunks: totalChunks
+                }, peerIdForTransfer);
+
+                // 2. Stream chunk-by-chunk directly from disk (0 RAM heap overhead)
+                for (let i = 0; i < totalChunks; i++) {
+                    if (transferCancelled) return;
+
+                    const start = i * CHUNK_SIZE;
+                    const end = Math.min(start + CHUNK_SIZE, file.size);
+                    const chunkSlice = file.slice(start, end);
+                    const chunkBuffer = await chunkSlice.arrayBuffer();
+
+                    transferSend({
+                        type: 'file_chunk',
+                        filename: file.name,
+                        index: i,
+                        data: new Uint8Array(chunkBuffer)
+                    }, peerIdForTransfer);
+
+                    const percent = ((i + 1) / totalChunks) * 100;
+                    updateProgress('send', percent);
+
+                    // Yield execution to allow WebRTC data channel buffers to flush smoothly
+                    if (i % 8 === 0) {
+                        await new Promise(r => setTimeout(r, 0));
                     }
                 }
 
-                await sendFile(file, peerIdForTransfer, { 
-                    name: file.name, 
-                    mime: file.type || 'application/octet-stream',
-                    fileHash: fileHash,
-                    chunkHashes: chunkHashes,
-                    size: file.size
-                }, (percent) => {
-                    if (transferCancelled) return;
-                    updateProgress('send', percent * 100);
-                });
-
                 if (transferCancelled) return;
+                // 3. Send file completion notification
+                transferSend({ type: 'file_end', filename: file.name }, peerIdForTransfer);
                 updateProgress('send', 100);
-                await new Promise(r => setTimeout(r, 500)); 
+                await new Promise(r => setTimeout(r, 300));
             }
             
             if (transferCancelled) return;
             document.getElementById('send-filename').innerText = t('all_files_sent');
             setTimeout(() => {
                 if (!transferCancelled) goHome();
-            }, 10000);
+            }, 3500);
         }
 
         function renderSenderEmojiPicker(options, onSelect) {
@@ -4297,7 +4311,7 @@
         function cancelTransfer(notifyPeer = true) {
             transferCancelled = true;
             isReceiveComplete = false;
-            activeSendBufferMap = {};
+            activeSendFileMap = {};
             hideLoading();
             document.getElementById('sender-emoji-modal').classList.remove('open');
             document.getElementById('recipient-emoji-modal').classList.remove('open');
@@ -4365,110 +4379,88 @@
         }
 
         function setupReceiverLogic() {
-            let pendingMetadata = null;
-            let currentFileRawBuffer = null;
+            let activeFileMeta = null;
+            let activeFileChunks = [];
 
             transferGet(async (payload, peerId) => {
-                if (payload.type === 'repair_chunk' && currentFileRawBuffer && pendingMetadata) {
-                    const CHUNK_SIZE = 64 * 1024;
-                    const start = payload.index * CHUNK_SIZE;
-                    new Uint8Array(currentFileRawBuffer).set(payload.data, start);
-                } else if (payload.type === 'repair_complete' && currentFileRawBuffer && pendingMetadata) {
-                    // Re-verify repaired buffer
-                    const repairedHash = await computeBufferSha256(currentFileRawBuffer);
-                    const badge = document.getElementById('receive-verify-badge');
-                    if (repairedHash === pendingMetadata.fileHash) {
-                        badge.textContent = t('repaired_verified');
-                        badge.style.display = "block";
-                        finalizeReceivedFile(currentFileRawBuffer, pendingMetadata);
-                    } else {
-                        badge.textContent = t('repair_failed');
-                        badge.style.display = "block";
-                        finalizeReceivedFile(currentFileRawBuffer, pendingMetadata);
-                    }
-                }
-            });
-
-            onFileProgress((percent, peerId, metadata) => {
                 if (peerIdForTransfer && peerId !== peerIdForTransfer) return;
-                document.getElementById('receive-status').style.display = 'none';
-                document.getElementById('receive-progress-container').style.display = 'block';
-                if (metadata && metadata.name) {
-                    const safeName = sanitizeFilename(metadata.name);
+
+                if (payload.type === 'file_start') {
+                    activeFileMeta = payload;
+                    activeFileChunks = new Array(payload.totalChunks);
+
+                    document.getElementById('receive-status').style.display = 'none';
+                    document.getElementById('receive-progress-container').style.display = 'block';
+                    const safeName = sanitizeFilename(payload.name);
                     document.getElementById('receive-filename').textContent = t('receiving_file', { name: safeName });
-                }
-                document.getElementById('btn-done-receiving').style.display = 'none';
-                document.getElementById('btn-redownload-receiving').style.display = 'none';
-                updateReceiverGuestUI(false);
+                    document.getElementById('btn-done-receiving').style.display = 'none';
+                    document.getElementById('btn-redownload-receiving').style.display = 'none';
+                    updateReceiverGuestUI(false);
+                    updateProgress('receive', 0);
 
-                const progressVal = (typeof percent === 'number' && !isNaN(percent)) ? percent * 100 : 0;
-                updateProgress('receive', progressVal);
-            });
+                } else if (payload.type === 'file_chunk') {
+                    if (!activeFileMeta || activeFileMeta.name !== payload.filename) return;
+                    activeFileChunks[payload.index] = payload.data;
+                    const percent = ((payload.index + 1) / activeFileMeta.totalChunks) * 100;
+                    updateProgress('receive', percent);
 
-            getFile(async (data, peerId, metadata) => {
-                if (peerIdForTransfer && peerId !== peerIdForTransfer) return;
-                updateProgress('receive', 100);
+                } else if (payload.type === 'file_end') {
+                    if (!activeFileMeta || activeFileMeta.name !== payload.filename) return;
 
-                pendingMetadata = metadata;
-                const blob = data instanceof Blob ? data : new Blob([data], { type: sanitizeMimeType(metadata?.mime) });
-                const buffer = await blob.arrayBuffer();
-                currentFileRawBuffer = buffer;
+                    // Verify if all chunks arrived
+                    const missingChunks = [];
+                    for (let i = 0; i < activeFileMeta.totalChunks; i++) {
+                        if (!activeFileChunks[i]) {
+                            missingChunks.push(i);
+                        }
+                    }
 
-                const badge = document.getElementById('receive-verify-badge');
-
-                if (isVerifyRepairEnabled && metadata?.fileHash) {
-                    const calculatedHash = await computeBufferSha256(buffer);
-                    if (calculatedHash === metadata.fileHash) {
-                        badge.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">check</span> ${t('verified_intact')}`;
-                        badge.style.display = "block";
-                        finalizeReceivedFile(buffer, metadata);
-                    } else if (metadata.chunkHashes && metadata.chunkHashes.length > 0) {
+                    if (missingChunks.length > 0 && transferSend) {
+                        const badge = document.getElementById('receive-verify-badge');
                         badge.innerHTML = `<svg class="loading-spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;"><rect width="100%" height="100%" fill="var(--accent)" stroke="none" class="loading-spinner-ind"></rect></svg> ${t('repairing_chunks')}`;
                         badge.style.display = "block";
-                        // Find corrupted chunks and request repair
-                        const CHUNK_SIZE = 64 * 1024;
-                        const badIndices = [];
-                        for (let c = 0; c < metadata.chunkHashes.length; c++) {
-                            const slice = buffer.slice(c * CHUNK_SIZE, Math.min((c + 1) * CHUNK_SIZE, buffer.byteLength));
-                            const chunkHash = await computeBufferSha256(slice);
-                            if (chunkHash !== metadata.chunkHashes[c]) {
-                                badIndices.push(c);
-                            }
-                        }
-                        if (badIndices.length > 0 && transferSend) {
-                            transferSend({
-                                type: 'repair_request',
-                                filename: metadata.name,
-                                chunkIndices: badIndices
-                            }, peerId);
-                            return; // Wait for repair_complete
-                        } else {
-                            finalizeReceivedFile(buffer, metadata);
-                        }
-                    } else {
-                        finalizeReceivedFile(buffer, metadata);
+
+                        transferSend({
+                            type: 'repair_request',
+                            filename: activeFileMeta.name,
+                            chunkIndices: missingChunks
+                        }, peerId);
+                        return; // Await repair
                     }
-                } else {
-                    finalizeReceivedFile(buffer, metadata);
+
+                    finalizeReceivedStream(activeFileChunks, activeFileMeta);
+
+                } else if (payload.type === 'repair_chunk') {
+                    if (activeFileChunks && activeFileMeta && payload.filename === activeFileMeta.name) {
+                        activeFileChunks[payload.index] = payload.data;
+                    }
+                } else if (payload.type === 'repair_complete') {
+                    if (activeFileChunks && activeFileMeta && payload.filename === activeFileMeta.name) {
+                        const badge = document.getElementById('receive-verify-badge');
+                        badge.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">check</span> ${t('repaired_verified')}`;
+                        badge.style.display = "block";
+                        finalizeReceivedStream(activeFileChunks, activeFileMeta);
+                    }
                 }
             });
         }
 
-        function finalizeReceivedFile(buffer, metadata) {
+        function finalizeReceivedStream(chunks, metadata) {
             const safeMime = sanitizeMimeType(metadata?.mime);
             const safeName = sanitizeFilename(metadata?.name);
 
-            lastReceivedBlob = new Blob([buffer], { type: safeMime });
+            lastReceivedBlob = new Blob(chunks, { type: safeMime });
             lastReceivedFilename = safeName;
 
             redownloadLastFile();
 
             document.getElementById('receive-filename').textContent = t('file_transferred');
+            document.getElementById('btn-cancel-receiving').style.display = 'none';
             document.getElementById('btn-done-receiving').style.display = 'flex';
             document.getElementById('btn-redownload-receiving').style.display = 'flex';
             updateReceiverGuestUI(true);
         }
-
+        
         function handleDoneReceiving() {
             if (!isUserSetUp()) {
                 setSetupStep(1, false);
