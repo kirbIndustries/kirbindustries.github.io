@@ -234,13 +234,13 @@
         @keyframes view-transition-fade-in {
             from {
                 opacity: 0;
-                transform: scale(1.04);
+                transform: scale(1.02);
                 filter: blur(4px);
             }
             to {
                 opacity: 1;
-                transform: scale(1);
-                filter: blur(0px);
+                transform: none;
+                filter: none;
             }
         }
         
@@ -545,6 +545,35 @@
             transition: background-color 0.2s, transform 0.1s;
         }
 
+        /* Debug Overlay */
+        #debug-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50%);
+            font-family: monospace, monospace;
+            pointer-events: none;
+            background-color: rgba(0,255,0,0.5);
+            color: black;
+            font-size: 8px;
+            line-height: 1;
+            z-index: 99999;
+            max-width: 340px;
+            user-select: text;
+            display: none;
+            word-break: break-all;
+        }
+
+        #debug-overlay .debug-header {
+            background-color: rgba(0,0,255);
+            color: white;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            justify-content: space-between;
+        }
+
         /* View Layouts */
         .view {
             display: none;
@@ -781,19 +810,28 @@
         }
         .radar-ripple {
             position: absolute;
-            width: 100px; height: 100px;
-            top: calc(50% - 50px); left: calc(50% - 50px);
+            width: 80px; height: 80px;
+            top: calc(50% - 40px); left: calc(50% - 40px);
             border-radius: 50%;
-            background: radial-gradient(circle,transparent 0%, var(--accent) 100%);
+            background: radial-gradient(
+                circle closest-side,
+                transparent 0%,
+                var(--accent) 80%,
+                transparent 100%
+            );
             opacity: 0;
-            animation: ripple 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            animation: ripple 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
             pointer-events: none;
         }
-        .radar-ripple:nth-child(2) { animation-delay: 1.25s; }
         
         @keyframes ripple {
-            0% { transform: scale(0.6); opacity: 0.5; filter: blur(5px); }
-            100% { transform: scale(var(--ripple-max-scale, 3.1)); opacity: 0; filter: blur(10px); }
+            0% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: scale(var(--ripple-max-scale, 6.1));
+                opacity: 0;
+            }
         }
 
         .radar-peers-container {
@@ -1356,6 +1394,15 @@
 <body>
     <div id="loading-toast" class="loading-toast">Loading</div>
 
+    <!-- DEBUG -->
+    <div id="debug-overlay">
+        <div class="debug-header">
+            <span>Debug</span>
+            <span style="cursor:pointer;" onclick="toggleDebugOverlay(false)">Close</span>
+        </div>
+        <div id="debug-content">Initializing...</div>
+    </div>
+
     <!-- APP BAR -->
     <div class="top-app-bar" id="app-bar" style="display:none;">
         <div class="header-title" style="flex-direction: column; font-size: 18px; gap: 0;">
@@ -1369,7 +1416,7 @@
         </div>
     </div>
 
-    <!-- PROFILE SETUP VIEW (4-PAGE ONBOARDING FLOW) -->
+    <!-- SETUP -->
     <div id="view-profile-setup" class="view">
         <div class="setup-step-container">
             <div id="setup-step-dots" class="setup-dots">
@@ -1570,7 +1617,6 @@
 
         <div class="radar-box">
             <div class="radar-ripple"></div>
-            <div class="radar-ripple"></div>
             <div class="radar-core">
                 <img id="device-avatar" src="">
                 <span class="peer-bubble-name" style="background-color: var(--accent); color: var(--background-color);" data-i18n="me_label">Me</span>
@@ -1677,11 +1723,11 @@
                 </button>
             </div>
 
-            <!-- Dropwave Features Mini Ad for Guest Receivers -->
-            <div id="receive-dropwave-ad" class="card" style="display:none; width:100%; max-width:340px; margin-top:20px; padding:20px; border-radius:50px; corner-shape:superellipse(1.5); text-align:left; background:var(--search-background); border:1px solid var(--glass-border); box-shadow:var(--sun-shadow);">
+            <!-- Dropshare Features Mini Ad for Guest Receivers -->
+            <div id="receive-Dropshare-ad" class="card" style="display:none; width:100%; max-width:340px; margin-top:20px; padding:20px; border-radius:50px; corner-shape:superellipse(1.5); text-align:left; background:var(--search-background); border:1px solid var(--glass-border); box-shadow:var(--sun-shadow);">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                     <img alt="App Icon" src="favicon.png" style="width: 32px;">
-                    <span style="font-weight:700; font-size:18px;" data-i18n="ad_title">kirbIndustries Dropwave</span>
+                    <span style="font-weight:700; font-size:18px;" data-i18n="ad_title">kirbIndustries Dropshare</span>
                 </div>
                 <div style="font-weight:600; font-size:15px; margin-bottom:12px; line-height:1.3;" data-i18n="ad_headline">Experience next-gen wireless transfer</div>
                 <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; opacity:0.8; margin-bottom:16px;">
@@ -1780,19 +1826,97 @@
                     All data is peer-to-peer. Your files never pass through a cloud server.
                 </div>
             </div> 
+
+            <div style="padding: 0 16px 12px 16px;">
+                <img src="https://github.com/kirbIndustries/assets/blob/main/brand/img/colorlogotxt/text-owner-transparent.png?raw=true" style="width: 200px; margin: 15px 0;">
+                <div>
+                    <span>
+                        © Copyright kirbIndustries 2026-2027
+                        <br><br>
+                        <small>You are free to do anything to the code under CC BY-NC 4.0. You may not use our brand in any method not authorized, including identifiable visual assets.</small>
+                        <br>
+                    </span>
+                    <br>
+                    <small>Yeah, I know, she was so surprised!</small>
+                </div>
+            </div>
+        </div> 
+
+        <div class="settings-group">
+            <div class="settings-section-title" data-i18n="advanced_title">Advanced</div>
+            <div class="settings-row" onclick="navigatePage('view-advanced-settings')">
+                <div style="width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+                    <span class="material-symbols-rounded" style="color:var(--accent); font-size:22px;">tune</span>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-weight:600; font-size:15px;" data-i18n="advanced_title">Advanced</div>
+                    <div style="font-size:12px; opacity:0.7;" data-i18n="advanced_desc">Trackers, system overrides, feature toggles, debug overlay</div>
+                </div>
+                <span class="material-symbols-rounded" style="opacity:0.4;">chevron_right</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADVANCED SETTINGS VIEW -->
+    <div id="view-advanced-settings" class="view">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom: 20px;">
+            <button class="icon-btn" onclick="navigatePage('view-settings')" style="background:transparent; border:none; box-shadow:none; padding:8px;">
+                <span class="material-symbols-rounded">arrow_back</span>
+            </button>
+            <h1 style="font-size:24px;" data-i18n="advanced_title">Advanced</h1>
         </div>
 
-        <div class="settings-group" style="padding: 0 16px 12px 16px;">
-            <img src="https://github.com/kirbIndustries/assets/blob/main/brand/img/colorlogotxt/text-owner-transparent.png?raw=true" style="width: 200px; margin: 15px 0;">
-            <div>
-                <span>
-                    © Copyright kirbIndustries 2026-2027
-                    <br><br>
-                    <small>You are free to do anything to the code under CC BY-NC 4.0. You may not use our brand in any method not authorized, including identifiable visual assets.</small>
-                    <br>
-                </span>
-                <br>
-                <small>Yeah, I know, she was so surprised!</small>
+        <!-- Custom WebSocket Trackers -->
+        <div class="settings-group">
+            <div class="settings-section-title" data-i18n="trackers_title">WebTorrent Signaling Trackers</div>
+            <div style="font-size:12px; opacity:0.7;" data-i18n="trackers_desc">One tracker URL per line. Used to negotiate direct WebRTC connections.</div>
+            <textarea id="setting-custom-trackers" class="code-input" style="height: 100px; font-size: 12px; text-align: left; letter-spacing: normal; font-family: monospace; padding: 12px; width: 100%; resize: vertical; border-radius: 16px; margin: 0;"></textarea>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-primary" onclick="saveCustomTrackers()" style="flex:1; height:40px; margin:0; font-size:13px; border-radius:20px;">
+                    <span class="material-symbols-rounded" style="font-size:16px;">save</span>
+                    <span data-i18n="save_trackers_btn">Apply Trackers</span>
+                </button>
+                <button class="icon-btn" onclick="resetDefaultTrackers()" title="Reset to Defaults" style="width:40px; height:40px; padding:0;">
+                    <span class="material-symbols-rounded" style="font-size:18px;">restart_alt</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Feature Toggles -->
+        <div class="settings-group">
+            <div class="settings-section-title" data-i18n="features_title">Module & Feature Toggles</div>
+            <div class="settings-row">
+                <div style="flex:1; padding-right:10px;">
+                    <div>Radar Visualizer</div>
+                    <div style="font-size:12px; opacity:0.7;">Show organic floating radar on home screen</div>
+                </div>
+                <input type="checkbox" id="feature-toggle-radar" checked onchange="setFeatureToggle('radar', this.checked)">
+            </div>
+            <div class="settings-row" style="border-top: 1px solid var(--glass-border); padding-top: 10px;">
+                <div style="flex:1; padding-right:10px;">
+                    <div>Group Rooms</div>
+                    <div style="font-size:12px; opacity:0.7;">Enable public and private messaging rooms</div>
+                </div>
+                <input type="checkbox" id="feature-toggle-rooms" checked onchange="setFeatureToggle('rooms', this.checked)">
+            </div>
+            <div class="settings-row" style="border-top: 1px solid var(--glass-border); padding-top: 10px;">
+                <div style="flex:1; padding-right:10px;">
+                    <div>PIN Code Transfer</div>
+                    <div style="font-size:12px; opacity:0.7;">Enable 6-digit PIN numerical rendezvous & 2FA</div>
+                </div>
+                <input type="checkbox" id="feature-toggle-pin" checked onchange="setFeatureToggle('pin', this.checked)">
+            </div>
+        </div>
+
+        <!-- Debug Diagnostics -->
+        <div class="settings-group">
+            <div class="settings-section-title" data-i18n="debug_title">Diagnostics & Debugging</div>
+            <div class="settings-row">
+                <div style="flex:1; padding-right:10px;">
+                    <div>Real-Time Debug Overlay</div>
+                    <div style="font-size:12px; opacity:0.7;">Display live WebRTC ICE telemetry, connection state, and swarm diagnostics</div>
+                </div>
+                <input type="checkbox" id="setting-debug-overlay" onchange="toggleDebugOverlay(this.checked)">
             </div>
         </div>
     </div>
@@ -1936,14 +2060,41 @@
     </div>
 
     <script>
+        // Protective wrapper to safeguard PerformanceObserver/requestIdleCallback metrics
+        if (typeof window !== 'undefined') {
+            const _origRIC = window.requestIdleCallback;
+            if (typeof _origRIC === 'function') {
+                window.requestIdleCallback = function(cb, opts) {
+                    return _origRIC.call(window, function(deadline) {
+                        try { cb(deadline); } catch (err) {
+                            if (!err.message || !err.message.includes('startTime')) console.warn(err);
+                        }
+                    }, opts);
+                };
+            }
+        }
+
+        const DEFAULT_TRACKERS = [
+            'wss://tracker.webtorrent.dev:443',
+            'wss://tracker.openwebtorrent.com:443',
+            'wss://open.ftorrent.com:443',
+            'wss://tracker.files.fm:7073/announce'
+        ];
+
+        function getActiveTrackers() {
+            try {
+                const stored = localStorage.getItem('dropshare_custom_trackers');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                }
+            } catch (e) {}
+            return DEFAULT_TRACKERS;
+        }
+
         const CONFIG = { 
             appId: 'kirbindust-dropshare',
-            trackerUrls: [
-                'wss://tracker.openwebtorrent.com',
-                'wss://open.ftorrent.com:443/announce',
-                'wss://tracker.files.fm:7073/announce',
-                'wss://tracker.webtorrent.dev'
-            ],
+            trackerUrls: getActiveTrackers(),
             rtcConfig: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
@@ -1952,6 +2103,12 @@
                     { urls: 'stun:stun.cloudflare.com:3478' }
                 ]
             }
+        };
+
+        const featuresEnabled = {
+            radar: localStorage.getItem('dropshare_feature_radar') !== 'false',
+            rooms: localStorage.getItem('dropshare_feature_rooms') !== 'false',
+            pin: localStorage.getItem('dropshare_feature_pin') !== 'false'
         };
 
         // Normalize discovery room so different physical devices on LAN or localhost join the same swarm
@@ -2082,13 +2239,24 @@
                 sending_ellipsis: "Sending",
                 id_label: "ID: {id}",
                 me_label: "Me",
+                advanced_title: "Advanced",
+                advanced_desc: "Trackers, system overrides, feature toggles, debug overlay",
+                trackers_title: "WebTorrent Signaling Trackers",
+                trackers_desc: "One tracker URL per line. Used to negotiate direct WebRTC connections.",
+                save_trackers_btn: "Apply Trackers",
+                overrides_title: "System Preference Overrides",
+                override_theme: "Theme Mode",
+                override_motion: "Animations & Motion",
+                override_contrast: "Contrast",
+                features_title: "Module & Feature Toggles",
+                debug_title: "Diagnostics & Debugging",
                 gps_discovery_title: "GPS Cross-Network Discovery",
                 gps_discovery_desc: "Discover nearby devices across different networks (5G & Wi-Fi)",
                 distance_meters: "{dist}m away",
                 warn_mobile: "Transferring on mobile data. Cellular data charges may apply.",
                 warn_data_saver: "Data Saver is enabled on this device.",
                 warn_internet: "Transferring over the Internet (not on the same local Wi-Fi).",
-                ad_title: "kirbIndustries Dropwave",
+                ad_title: "kirbIndustries Dropshare",
                 ad_headline: "Experience next-gen wireless transfer",
                 ad_feature_1: "Direct P2P speeds on any device",
                 ad_feature_2: "Zero cloud & 100% end-to-end encrypted",
@@ -2226,13 +2394,24 @@
                 sending_ellipsis: "전송 중",
                 id_label: "ID: {id}",
                 me_label: "나",
+                advanced_title: "고급 설정",
+                advanced_desc: "트래커, 시스템 재정의, 기능 토글, 디버그 오버레이",
+                trackers_title: "WebTorrent 시그널링 트래커",
+                trackers_desc: "한 줄에 하나의 트래커 URL을 입력하세요. WebRTC 연결 협상에 사용됩니다.",
+                save_trackers_btn: "트래커 적용",
+                overrides_title: "시스템 환경설정 재정의",
+                override_theme: "테마 모드",
+                override_motion: "애니메이션 및 모션",
+                override_contrast: "대비",
+                features_title: "모듈 및 기능 토글",
+                debug_title: "진단 및 디버깅",
                 gps_discovery_title: "GPS 교차 네트워크 탐색",
                 gps_discovery_desc: "다른 네트워크(5G 및 Wi-Fi)에 있는 주변 기기도 위치 기반으로 탐색",
                 distance_meters: "{dist}m 거리",
                 warn_mobile: "모바일 데이터로 전송 중입니다. 데이터 요금이 발생할 수 있습니다.",
                 warn_data_saver: "기기에서 데이터 절약 모드가 켜져 있습니다.",
                 warn_internet: "인터넷을 통해 전송 중입니다 (동일한 로컬 Wi-Fi 아님).",
-                ad_title: "kirbIndustries Dropwave",
+                ad_title: "kirbIndustries Dropshare",
                 ad_headline: "차세대 무선 파일 전송을 경험해보세요",
                 ad_feature_1: "모든 기기에서 초고속 직접 P2P 전송",
                 ad_feature_2: "클라우드 없이 100% 종단간 암호화",
@@ -2370,13 +2549,24 @@
                 sending_ellipsis: "送信中",
                 id_label: "ID: {id}",
                 me_label: "自分",
+                advanced_title: "詳細設定",
+                advanced_desc: "トラッカー、システム設定の上書き、機能切替、デバッグオーバーレイ",
+                trackers_title: "WebTorrentシグナリングトラッカー",
+                trackers_desc: "1行に1つのトラッカーURLを入力します。WebRTC接続の確立に使用されます。",
+                save_trackers_btn: "トラッカーを適用",
+                overrides_title: "システム設定の上書き",
+                override_theme: "テーマモード",
+                override_motion: "アニメーションとモーション",
+                override_contrast: "コントラスト",
+                features_title: "モジュールと機能の切替",
+                debug_title: "診断とデバッグ",
                 gps_discovery_title: "GPSクロスネットワーク検出",
                 gps_discovery_desc: "異なるネットワーク（5GとWi-Fi）間でも位置情報で近くの端末を検出",
                 distance_meters: "{dist}m先",
                 warn_mobile: "モバイルデータ通信で転送しています。通信量にご注意ください。",
                 warn_data_saver: "データセーバーが有効になっています。",
                 warn_internet: "インターネット経由で転送中（同じローカルWi-Fiではありません）。",
-                ad_title: "kirbIndustries Dropwave",
+                ad_title: "kirbIndustries Dropshare",
                 ad_headline: "次世代のワイヤレスファイル転送を体験",
                 ad_feature_1: "あらゆる端末で超高速P2P転送",
                 ad_feature_2: "クラウド不要・100%エンドツーエンド暗号化",
@@ -2512,15 +2702,26 @@
                 pin_code_name: "PIN 码",
                 more_count: "更多 ({count})",
                 sending_ellipsis: "正在发送",
-                id_label: "ID：{id}",
+                id_label: "ID: {id}",
                 me_label: "我",
+                advanced_title: "高级设置",
+                advanced_desc: "追踪器、系统覆盖、功能开关、实时调试悬浮窗",
+                trackers_title: "WebTorrent 信令追踪器",
+                trackers_desc: "每行一个追踪器 URL，用于协商建立 WebRTC 直连。",
+                save_trackers_btn: "应用追踪器",
+                overrides_title: "系统偏好覆盖",
+                override_theme: "主题模式",
+                override_motion: "动画与动态效果",
+                override_contrast: "对比度",
+                features_title: "模块与功能开关",
+                debug_title: "诊断与调试",
                 gps_discovery_title: "GPS跨网络发现",
                 gps_discovery_desc: "即使在不同网络（5G与Wi-Fi）下也能通过位置发现附近设备",
                 distance_meters: "相距 {dist}米",
                 warn_mobile: "正在使用移动数据传输，可能会产生流量费用。",
                 warn_data_saver: "设备已开启省流量模式。",
                 warn_internet: "正在通过公网互联网传输（两台设备不在同一局域网 Wi-Fi 下）。",
-                ad_title: "kirbIndustries Dropwave",
+                ad_title: "kirbIndustries Dropshare",
                 ad_headline: "体验下一代无线文件传输",
                 ad_feature_1: "全平台超高速点对点传输",
                 ad_feature_2: "无需云端，100% 端到端加密",
@@ -2658,13 +2859,24 @@
                 sending_ellipsis: "Enviando",
                 id_label: "ID: {id}",
                 me_label: "Yo",
+                advanced_title: "Avanzado",
+                advanced_desc: "Rastreadores, reemplazos del sistema, funciones, depuración",
+                trackers_title: "Rastreadores de señal WebTorrent",
+                trackers_desc: "Una URL de rastreador por línea. Se utiliza para negociar conexiones WebRTC.",
+                save_trackers_btn: "Aplicar rastreadores",
+                overrides_title: "Reemplazos de preferencias del sistema",
+                override_theme: "Modo de tema",
+                override_motion: "Animaciones y movimiento",
+                override_contrast: "Contraste",
+                features_title: "Interruptores de funciones",
+                debug_title: "Diagnósticos y depuración",
                 gps_discovery_title: "Detección por GPS entre redes",
                 gps_discovery_desc: "Detecta dispositivos cercanos en redes distintas (5G y Wi-Fi) usando ubicación",
                 distance_meters: "A {dist}m",
                 warn_mobile: "Transfiriendo por datos móviles. Pueden aplicarse cargos de datos.",
                 warn_data_saver: "El modo de ahorro de datos está activo en este dispositivo.",
                 warn_internet: "Transfiriendo por Internet (no están en la misma red Wi-Fi local).",
-                ad_title: "kirbIndustries Dropwave",
+                ad_title: "kirbIndustries Dropshare",
                 ad_headline: "Prueba la transferencia inalámbrica de última generación",
                 ad_feature_1: "Velocidad P2P directa en cualquier dispositivo",
                 ad_feature_2: "Sin nube y 100% cifrado de extremo a端",
@@ -2802,13 +3014,24 @@
                 sending_ellipsis: "Wird gesendet",
                 id_label: "ID: {id}",
                 me_label: "Ich",
+                advanced_title: "Erweitert",
+                advanced_desc: "Tracker, Systemüberschreibungen, Funktionsschalter, Debug-Overlay",
+                trackers_title: "WebTorrent-Signalisierungs-Tracker",
+                trackers_desc: "Eine Tracker-URL pro Zeile. Dient zum Aushandeln von WebRTC-Direktverbindungen.",
+                save_trackers_btn: "Tracker anwenden",
+                overrides_title: "System-Überschreibungen",
+                override_theme: "Designmodus",
+                override_motion: "Animationen & Bewegung",
+                override_contrast: "Kontrast",
+                features_title: "Funktionsschalter",
+                debug_title: "Diagnose & Debugging",
                 gps_discovery_title: "GPS-Netzwerkübergreifende Erkennung",
                 gps_discovery_desc: "Geräte in der Nähe auch über verschiedene Netzwerke (5G & WLAN) ortsbezogen erkennen",
                 distance_meters: "{dist}m entfernt",
                 warn_mobile: "Übertragung über mobile Daten. Es können Gebühren anfallen.",
                 warn_data_saver: "Datensparmodus ist auf diesem Gerät aktiviert.",
                 warn_internet: "Übertragung über das Internet (nicht im selben lokalen WLAN).",
-                ad_title: "kirbIndustries Dropwave",
+                ad_title: "kirbIndustries Dropshare",
                 ad_headline: "Erlebe drahtlose Dateiübertragung der nächsten Generation",
                 ad_feature_1: "Direkte P2P-Geschwindigkeit auf jedem Gerät",
                 ad_feature_2: "Ohne Cloud & 100% Ende-zu-Ende-verschlüsselt",
@@ -3268,7 +3491,7 @@
             if (isComplete !== undefined) isReceiveComplete = Boolean(isComplete);
             const isSetUp = isUserSetUp();
             const cancelBtn = document.getElementById('btn-cancel-receiving');
-            const adCard = document.getElementById('receive-dropwave-ad');
+            const adCard = document.getElementById('receive-Dropshare-ad');
             const setupBtn = document.getElementById('btn-ad-setup-profile');
             const modalCancelBtn = document.getElementById('recipient-modal-cancel-btn');
 
@@ -3319,7 +3542,7 @@
                 if (el) el.classList.add('active');
 
                 const appBar = document.getElementById('app-bar');
-                const hiddenHeaders = ['view-profile-setup', 'view-send', 'view-receive', 'view-settings', 'view-code', 'view-rooms', 'view-room-chat'];
+                const hiddenHeaders = ['view-profile-setup', 'view-send', 'view-receive', 'view-settings', 'view-advanced-settings', 'view-code', 'view-rooms', 'view-room-chat'];
                 if (isReceivingLocked || hiddenHeaders.includes(id)) {
                     appBar.style.display = 'none';
                 } else {
@@ -3353,22 +3576,36 @@
         }
 
         function initNavigationAPI() {
-            // Handle browser Back / Forward buttons and mobile swipe gestures
+            // Only intercept browser-initiated traversals (Back/Forward) to eliminate recursive pushState soft-navigation collisions
+            if ('navigation' in window) {
+                window.navigation.addEventListener('navigate', (event) => {
+                    if (!event.canIntercept || event.navigationType === 'push' || event.navigationType === 'replace') {
+                        return;
+                    }
+                    const url = new URL(event.destination.url);
+                    const targetView = url.hash.replace('#', '');
+                    if (targetView && document.getElementById(targetView)) {
+                        event.intercept({
+                            async handler() {
+                                showView(targetView, false);
+                            }
+                        });
+                    }
+                });
+            }
+
             window.addEventListener('popstate', () => {
-                // 1. Dismiss any open modals on back action
                 const openModals = document.querySelectorAll('.screenshot-modal.open');
                 if (openModals.length > 0) {
                     openModals.forEach(m => m.classList.remove('open'));
                 }
 
-                // 2. Abort transfer if backing out of active send screen
                 const activeView = document.querySelector('.view.active')?.id;
                 if (activeView === 'view-send') {
                     cancelTransfer(true);
                     return;
                 }
 
-                // 3. Restore previous view in history
                 const targetHash = window.location.hash.replace('#', '');
                 if (targetHash && document.getElementById(targetHash)) {
                     showView(targetHash, false);
@@ -3381,7 +3618,6 @@
                 }
             });
 
-            // Set initial history state
             if (window.location.hash === '' && isUserSetUp()) {
                 window.history.replaceState({ view: 'view-home' }, '', '#view-home');
             }
@@ -3710,7 +3946,7 @@
             const boxSize = Math.min(boxWidth, boxHeight);
 
             // Scale ripples dynamically to edge of the measured radar-box
-            radarBox.style.setProperty('--ripple-max-scale', (boxSize / 100).toFixed(2));
+            radarBox.style.setProperty('--ripple-max-scale', ((boxSize * 2) / 80).toFixed(2));
 
             // Dynamic annular boundaries and padding scaled to fill boxSize
             const MIN_DISTANCE = Math.max(70, Math.min(84, boxSize * 0.24));
@@ -3732,12 +3968,14 @@
             } else {
                 if (statusText) statusText.innerHTML = t('radar_found');
             }
-
-            // Combine system peer bubbles (Rooms, Code) with discovered network peers
-            const systemItems = [
-                { id: 'system-rooms', name: t('rooms_name'), icon: 'emoji_people', isSpecial: true, action: openRooms },
-                { id: 'system-code', name: t('pin_code_name'), icon: 'key', isSpecial: true, action: openCodeReceive }
-            ];
+            
+            const systemItems = [];
+            if (featuresEnabled.rooms) {
+                systemItems.push({ id: 'system-rooms', name: t('rooms_name'), icon: 'emoji_people', isSpecial: true, action: openRooms });
+            }
+            if (featuresEnabled.pin) {
+                systemItems.push({ id: 'system-code', name: t('pin_code_name'), icon: 'key', isSpecial: true, action: openCodeReceive });
+            }
 
             const allRadarItems = [
                 ...systemItems,
@@ -4531,6 +4769,98 @@
             isVerifyRepairEnabled = enabled;
         }
 
+        function setFeatureToggle(feature, enabled) {
+            featuresEnabled[feature] = enabled;
+            localStorage.setItem(`dropshare_feature_${feature}`, enabled ? 'true' : 'false');
+            renderRadarList();
+        }
+
+        function saveCustomTrackers() {
+            const txt = document.getElementById('setting-custom-trackers');
+            if (!txt) return;
+            const lines = txt.value.split('\n').map(l => l.trim()).filter(l => l.startsWith('ws://') || l.startsWith('wss://'));
+            if (lines.length === 0) {
+                showLoading("Enter at least one valid wss:// tracker");
+                setTimeout(hideLoading, 2000);
+                return;
+            }
+            localStorage.setItem('dropshare_custom_trackers', JSON.stringify(lines));
+            CONFIG.trackerUrls = lines;
+            showLoading("Trackers applied. Reconnecting...");
+            setTimeout(hideLoading, 1800);
+            if (discoveryRoomObj) {
+                try { discoveryRoomObj.leave(); } catch (e) {}
+                discoveryRoomObj = null;
+            }
+            initDiscovery();
+        }
+
+        function resetDefaultTrackers() {
+            localStorage.removeItem('dropshare_custom_trackers');
+            CONFIG.trackerUrls = DEFAULT_TRACKERS;
+            const txt = document.getElementById('setting-custom-trackers');
+            if (txt) txt.value = DEFAULT_TRACKERS.join('\n');
+            showLoading("Reset to default trackers");
+            setTimeout(hideLoading, 1500);
+            if (discoveryRoomObj) {
+                try { discoveryRoomObj.leave(); } catch (e) {}
+                discoveryRoomObj = null;
+            }
+            initDiscovery();
+        }
+
+        let debugInterval = null;
+        function toggleDebugOverlay(enabled) {
+            const overlay = document.getElementById('debug-overlay');
+            const toggle = document.getElementById('setting-debug-overlay');
+            if (toggle) toggle.checked = enabled;
+            if (!overlay) return;
+            overlay.style.display = enabled ? 'block' : 'none';
+
+            if (enabled) {
+                if (!debugInterval) {
+                    debugInterval = setInterval(updateDebugTelemetry, 1000);
+                }
+                updateDebugTelemetry();
+            } else {
+                if (debugInterval) {
+                    clearInterval(debugInterval);
+                    debugInterval = null;
+                }
+            }
+        }
+
+        async function updateDebugTelemetry() {
+            const content = document.getElementById('debug-content');
+            if (!content) return;
+            const activeView = document.querySelector('.view.active')?.id || 'none';
+            const conn = navigator.connection || {};
+            const peerCount = Object.keys(knownPeers).length;
+            const swarmRoom = typeof DISCOVERY_ROOM !== 'undefined' ? DISCOVERY_ROOM : 'n/a';
+            const selfPeerId = window.Trystero?.selfId || 'local';
+
+            let webrtcStatsStr = 'Idle (No active transfer)';
+            if (transferRoomObj && typeof transferRoomObj.getPeers === 'function') {
+                const peers = transferRoomObj.getPeers();
+                const pIds = Object.keys(peers);
+                if (pIds.length > 0) {
+                    webrtcStatsStr = `Peers in Room: ${pIds.length} [${pIds.join(', ')}]`;
+                }
+            }
+
+            content.innerHTML = `
+                <div><b>View:</b> ${activeView}</div>
+                <div><b>Self ID:</b> ${selfPeerId}</div>
+                <div><b>Swarm:</b> ${swarmRoom}</div>
+                <div><b>Nearby Discovered:</b> ${peerCount}</div>
+                <div><b>Trackers:</b> ${CONFIG.trackerUrls.length} configured</div>
+                <div><b>Network Type:</b> ${conn.type || 'standard/wifi'} (${conn.effectiveType || 'N/A'})</div>
+                <div><b>Data Saver:</b> ${conn.saveData ? 'ON' : 'OFF'}</div>
+                <div><b>GPS:</b> ${userLocationCoords ? `${userLocationCoords.lat.toFixed(4)}, ${userLocationCoords.lon.toFixed(4)} (acc: ${userLocationCoords.acc}m)` : 'Disabled / Inactive'}</div>
+                <div><b>WebRTC:</b> ${webrtcStatsStr}</div>
+            `;
+        }
+
         // --- Radar Overflow "More..." Modal ---
         function openRadarMoreList(items) {
             const listContainer = document.getElementById('radar-more-list');
@@ -5111,6 +5441,11 @@
         // --- Init ---
         function checkInitState() {
             applyStaticTranslations();
+
+            // Populate trackers in Advanced Settings view
+            const trackerTextarea = document.getElementById('setting-custom-trackers');
+            if (trackerTextarea) trackerTextarea.value = getActiveTrackers().join('\n');
+
             loadUserProfile(); // Always populate profile from storage before evaluating view states
             const urlParams = new URLSearchParams(window.location.search);
             const receiveCode = urlParams.get('code');
