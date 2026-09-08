@@ -1278,8 +1278,56 @@
             margin-top: 6px;
             object-fit: cover;
             border: 1px solid var(--glass-border);
+            display: block;
         }
 
+        .chat-file-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--search-background);
+            border: 1px solid var(--glass-border);
+            padding: 10px 14px;
+            border-radius: 20px;
+            corner-shape: superellipse(1.5);
+            margin-top: 6px;
+            box-shadow: var(--sun-shadow);
+            color: var(--text-color);
+            max-width: 280px;
+        }
+
+        .chat-file-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--color-on-primary, var(--background-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .chat-file-info {
+            flex: 1;
+            min-width: 0;
+            text-align: left;
+        }
+
+        .chat-file-name {
+            font-weight: 600;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-file-meta {
+            font-size: 11px;
+            opacity: 0.65;
+            margin-top: 2px;
+        }
+        
         .reply-banner {
             font-size: 0.75rem;
             opacity: 0.8;
@@ -1814,6 +1862,13 @@
                 </div>
                 <input type="checkbox" id="setting-verify-repair" checked onchange="toggleVerifyRepair(this.checked)">
             </div>
+            <div class="settings-row" style="border-top: 1.5px solid var(--glass-border);">
+                <div>
+                    <div data-i18n="cloud_fallback_title">Encrypted Cloud Fallback</div>
+                    <div style="font-size:12px; opacity:0.7;" data-i18n="cloud_fallback_desc">Compress, encrypt, and relay via cloud if direct P2P fails</div>
+                </div>
+                <input type="checkbox" id="setting-cloud-fallback" checked onchange="toggleCloudFallback(this.checked)">
+            </div>
         </div>
 
         <div class="settings-group">
@@ -1886,6 +1941,13 @@
         <!-- Feature Toggles -->
         <div class="settings-group">
             <div class="settings-section-title" data-i18n="features_title">Module & Feature Toggles</div>
+            <div class="settings-row">
+                <div style="flex:1; padding-right:10px;">
+                    <div>Encrypted Cloud Fallback</div>
+                    <div style="font-size:12px; opacity:0.7;">Zero-knowledge encrypted relay when WebRTC P2P fails</div>
+                </div>
+                <input type="checkbox" id="setting-cloud-fallback-adv" checked onchange="toggleCloudFallback(this.checked)">
+            </div>
             <div class="settings-row">
                 <div style="flex:1; padding-right:10px;">
                     <div>Radar Visualizer</div>
@@ -1970,21 +2032,28 @@
         <div class="room-chat-header">
             <div style="display:flex; align-items:center; gap:10px; min-width:0;">
                 <button class="icon-btn" onclick="showView('view-rooms')" style="background:transparent; border:none; box-shadow:none; padding:6px;">
-                    <span class="material-symbols-rounded">arrow_back</span>
+                    <span class="material-symbols-rounded">cancel</span>
                 </button>
                 <div style="min-width:0;">
                     <div id="room-chat-title" style="font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" data-i18n="room_default">Room</div>
-                    <div id="room-chat-status" style="font-size:12px; opacity:0.6;" data-i18n="connecting">Connecting...</div>
+                    <div style="display:flex; align-items:center; gap:6px; font-size:12px; opacity:0.65;">
+                        <span id="room-chat-id-badge" onclick="copyRoomId(currentRoomId)" title="Copy Room ID" style="cursor:pointer; display:inline-flex; align-items:center; gap:2px; background:var(--search-background); padding:1px 6px; border-radius:10px; border:1px solid var(--glass-border);">
+                            <span id="room-chat-id-label">ID: ---</span>
+                            <span class="material-symbols-rounded" style="font-size:12px;">content_copy</span>
+                        </span>
+                        <span>•</span>
+                        <span id="room-chat-status" data-i18n="connecting">Connecting...</span>
+                    </div>
                 </div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
-                <span id="room-chat-lock" class="material-symbols-rounded" style="font-size:18px; opacity:0.5;">lock_open</span>
+                <span id="room-chat-lock" onclick="showRoomPassword(currentRoomId)" title="Tap to view password" class="material-symbols-rounded" style="font-size:20px; opacity:0.7; cursor:pointer; padding:4px;">lock_open</span>
                 <button class="icon-btn" onclick="deleteRoom(currentRoomId)" title="Delete and leave room" data-i18n-title="delete_and_leave_room" style="background:transparent; border:none; box-shadow:none; padding:6px; color:var(--text-color);">
                     <span class="material-symbols-rounded" style="font-size:20px; opacity:0.7;">delete</span>
                 </button>
             </div>
         </div>
-
+        
         <div class="chat-container" id="room-chat-messages">
             <div style="text-align:center; opacity:0.5; font-size:0.85rem; margin-top:20px;" id="room-empty-state" data-i18n="no_messages">
                 No messages. Say hi!
@@ -2240,6 +2309,8 @@
                 sending_ellipsis: "Sending",
                 id_label: "ID: {id}",
                 me_label: "Me",
+                cloud_fallback_title: "Encrypted Cloud Fallback",
+                cloud_fallback_desc: "Compress, encrypt, and relay via cloud if direct P2P fails",
                 advanced_title: "Advanced",
                 advanced_desc: "Trackers, system overrides, feature toggles, debug overlay",
                 trackers_title: "WebTorrent Signaling Trackers",
@@ -2288,6 +2359,11 @@
                 setup_step4_guide3_desc: "Tap the Rooms bubble on your radar to chat, poll, and send files in real time.",
                 setup_finish_btn: "Start Sharing",
                 save_btn: "Save",
+                room_id_copied: "Room ID copied",
+                password_label: "Room Password",
+                room_public_no_pass: "This room is public (no password)",
+                file_too_large_room: "File exceeds 5MB room limit. Use direct transfer for large files.",
+                file_expired: "File expired (2-hour limit)",
             },
             ko: {
                                 replying: "답장 중...",
@@ -2395,6 +2471,8 @@
                 sending_ellipsis: "전송 중",
                 id_label: "ID: {id}",
                 me_label: "나",
+                cloud_fallback_title: "암호화된 클라우드 폴백",
+                cloud_fallback_desc: "직접 P2P 연결 실패 시 암호화 및 압축 후 클라우드로 자동 전송",
                 advanced_title: "고급 설정",
                 advanced_desc: "트래커, 시스템 재정의, 기능 토글, 디버그 오버레이",
                 trackers_title: "WebTorrent 시그널링 트래커",
@@ -2443,6 +2521,11 @@
                 setup_step4_guide3_desc: "레이더의 방 버블을 탭하여 실시간 채팅, 설문, 파일 전송을 이용하세요.",
                 setup_finish_btn: "공유 시작하기",
                 save_btn: "저장",
+                room_id_copied: "방 ID가 복사되었습니다",
+                password_label: "방 비밀번호",
+                room_public_no_pass: "이 방은 공개 방입니다 (비밀번호 없음)",
+                file_too_large_room: "파일이 방 제한(5MB)을 초과했습니다. 대용량 파일은 직접 전송을 이용하세요.",
+                file_expired: "파일 만료됨 (2시간 제한)",
             },
             ja: {
                                 replying: "返信中...",
@@ -2550,6 +2633,8 @@
                 sending_ellipsis: "送信中",
                 id_label: "ID: {id}",
                 me_label: "自分",
+                cloud_fallback_title: "暗号化クラウドフォールバック",
+                cloud_fallback_desc: "P2P接続が失敗した場合、暗号化・圧縮して自動転送",
                 advanced_title: "詳細設定",
                 advanced_desc: "トラッカー、システム設定の上書き、機能切替、デバッグオーバーレイ",
                 trackers_title: "WebTorrentシグナリングトラッカー",
@@ -2598,6 +2683,11 @@
                 setup_step4_guide3_desc: "レーダーのルームバブルをタップしてリアルタイムチャットやファイル共有を利用できます。",
                 setup_finish_btn: "共有を開始する",
                 save_btn: "保存",
+                room_id_copied: "ルームIDをコピーしました",
+                password_label: "ルームパスワード",
+                room_public_no_pass: "このルームは公開ルームです（パスワードなし）",
+                file_too_large_room: "ファイルがルームの上限（5MB）を超えています。大容量ファイルには直接転送をご利用ください。",
+                file_expired: "ファイルの期限切れ（2時間制限）",
             },
             zh: {
                                 replying: "正在回复...",
@@ -2705,6 +2795,8 @@
                 sending_ellipsis: "正在发送",
                 id_label: "ID: {id}",
                 me_label: "我",
+                cloud_fallback_title: "端到端加密云端中继",
+                cloud_fallback_desc: "当 P2P 直连失败时，自动压缩并加密上传以无缝完成传输",
                 advanced_title: "高级设置",
                 advanced_desc: "追踪器、系统覆盖、功能开关、实时调试悬浮窗",
                 trackers_title: "WebTorrent 信令追踪器",
@@ -2753,6 +2845,11 @@
                 setup_step4_guide3_desc: "点击雷达上的房间气泡，加入群聊、发起投票并传输文件。",
                 setup_finish_btn: "开始分享",
                 save_btn: "保存",
+                room_id_copied: "房间 ID 已复制",
+                password_label: "房间密码",
+                room_public_no_pass: "该房间为公开房间（无密码）",
+                file_too_large_room: "文件超过房间限制（最大 5MB）。大文件请使用直连传输。",
+                file_expired: "文件已过期（2小时限制）",
             },
             es: {
                                 replying: "Respondiendo...",
@@ -2860,6 +2957,8 @@
                 sending_ellipsis: "Enviando",
                 id_label: "ID: {id}",
                 me_label: "Yo",
+                cloud_fallback_title: "Respaldo en la nube cifrado",
+                cloud_fallback_desc: "Cifrar, comprimir y transmitir por la nube si falla la conexión P2P",
                 advanced_title: "Avanzado",
                 advanced_desc: "Rastreadores, reemplazos del sistema, funciones, depuración",
                 trackers_title: "Rastreadores de señal WebTorrent",
@@ -2908,6 +3007,11 @@
                 setup_step4_guide3_desc: "Toca la burbuja de salas en tu radar para chatear, hacer encuestas y enviar archivos.",
                 setup_finish_btn: "Comenzar a compartir",
                 save_btn: "Guardar",
+                room_id_copied: "ID de sala copiado",
+                password_label: "Contraseña de la sala",
+                room_public_no_pass: "Esta sala es pública (sin contraseña)",
+                file_too_large_room: "El archivo supera el límite de 5MB. Usa la transferencia directa para archivos grandes.",
+                file_expired: "Archivo caducado (límite de 2 horas)",
             },
             de: {
                                 replying: "Antworten...",
@@ -3015,6 +3119,8 @@
                 sending_ellipsis: "Wird gesendet",
                 id_label: "ID: {id}",
                 me_label: "Ich",
+                cloud_fallback_title: "Verschlüsselter Cloud-Fallback",
+                cloud_fallback_desc: "Bei P2P-Verbindungsfehler verschlüsseln, komprimieren und nahtlos übertragen",
                 advanced_title: "Erweitert",
                 advanced_desc: "Tracker, Systemüberschreibungen, Funktionsschalter, Debug-Overlay",
                 trackers_title: "WebTorrent-Signalisierungs-Tracker",
@@ -3063,6 +3169,11 @@
                 setup_step4_guide3_desc: "Tippe auf die Raum-Blase für Echtzeit-Chat, Umfragen und Dateitransfer.",
                 setup_finish_btn: "Jetzt teilen",
                 save_btn: "Speichern",
+                room_id_copied: "Raum-ID kopiert",
+                password_label: "Raum-Passwort",
+                room_public_no_pass: "Dieser Raum ist öffentlich (kein Passwort)",
+                file_too_large_room: "Datei überschreitet 5MB-Raumlimit. Für große Dateien Direktübertragung nutzen.",
+                file_expired: "Datei abgelaufen (2-Stunden-Limit)",
             }
         };
 
@@ -3349,7 +3460,140 @@
             }
         }
 
+        // --- Seamless Compressed & Encrypted Cloud Fallback Helpers ---
+        async function compressBlob(blob) {
+            if (typeof CompressionStream === 'undefined') return blob;
+            try {
+                const cs = new CompressionStream('gzip');
+                const stream = blob.stream().pipeThrough(cs);
+                return await new Response(stream).blob();
+            } catch (e) {
+                return blob;
+            }
+        }
+
+        async function decompressBlob(blob) {
+            if (typeof DecompressionStream === 'undefined') return blob;
+            try {
+                const ds = new DecompressionStream('gzip');
+                const stream = blob.stream().pipeThrough(ds);
+                return await new Response(stream).blob();
+            } catch (e) {
+                return blob;
+            }
+        }
+
+        async function deriveAesGcmKey(secretHex) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw',
+                enc.encode(secretHex || 'dropshare-fallback-key'),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveKey']
+            );
+            return crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: enc.encode('dropshare-cloud-salt-v1'),
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                keyMaterial,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function encryptBuffer(rawBuffer, secretHex) {
+            const key = await deriveAesGcmKey(secretHex);
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, rawBuffer);
+            const combined = new Uint8Array(iv.byteLength + cipher.byteLength);
+            combined.set(iv, 0);
+            combined.set(new Uint8Array(cipher), iv.byteLength);
+            return combined.buffer;
+        }
+
+        async function decryptBuffer(encryptedBuffer, secretHex) {
+            const key = await deriveAesGcmKey(secretHex);
+            const iv = encryptedBuffer.slice(0, 12);
+            const cipher = encryptedBuffer.slice(12);
+            return await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, key, cipher);
+        }
+
+        async function uploadEncryptedCloudFile(blob, onProgress) {
+            const formData = new FormData();
+            formData.append('file', blob, 'payload.enc');
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://tmpfiles.org/api/v1/upload');
+                if (xhr.upload && onProgress) {
+                    xhr.upload.onprogress = (e) => {
+                        if (e.lengthComputable) onProgress((e.loaded / e.total) * 100);
+                    };
+                }
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            const res = JSON.parse(xhr.responseText);
+                            if (res && res.data && res.data.url) {
+                                // Convert URL to direct download endpoint
+                                const directUrl = res.data.url.replace('https://tmpfiles.org/', 'https://tmpfiles.org/dl/');
+                                resolve(directUrl);
+                                return;
+                            }
+                        } catch (err) {}
+                    }
+                    reject(new Error("Cloud upload response failed"));
+                };
+                xhr.onerror = () => reject(new Error("Cloud upload network error"));
+                xhr.send(formData);
+            });
+        }
+
+        async function relayFallbackMetadata(roomId, metadataPayload) {
+            try {
+                const encVal = encodeURIComponent(JSON.stringify(metadataPayload));
+                await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/dropshare_relay/${roomId}/${encVal}`, {
+                    method: 'POST'
+                });
+            } catch (e) {}
+        }
+
+        async function queryFallbackMetadata(roomId) {
+            try {
+                const res = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/dropshare_relay/${roomId}`);
+                if (res.ok) {
+                    const text = await res.text();
+                    if (text && text !== 'null') {
+                        return JSON.parse(decodeURIComponent(text));
+                    }
+                }
+            } catch (e) {}
+            return null;
+        }
+
         // --- Security & Cryptographic Helpers ---
+        async function computeSha256Text(str) {
+            const buffer = new TextEncoder().encode(str);
+            const digest = await crypto.subtle.digest('SHA-256', buffer);
+            return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function importKeyFromSecret(secret) {
+            const enc = new TextEncoder();
+            const hash = await crypto.subtle.digest('SHA-256', enc.encode(secret));
+            return crypto.subtle.importKey(
+                'raw',
+                hash,
+                { name: 'AES-GCM' },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
         function generateSecureToken(byteLength = 32) {
             const bytes = new Uint8Array(byteLength);
             crypto.getRandomValues(bytes);
@@ -3403,9 +3647,23 @@
         let knownPeers = {};
         let incomingRoomId = null;
         let incomingSenderPeerId = null;
+        let incomingRoomKey = null;
+        let incomingSessionToken = null;
         let targetPeerIdForTransfer = null;
         let transferCancelled = false;
         let currentShareUrl = '';
+        let currentRoomId = null;
+        let currentRoomKey = null;
+        let currentSessionToken = null;
+        let currentPin = null;
+        let peerAuthorized = false;
+        let senderCryptoMasterKey = null;
+        let receiverCryptoMasterKey = null;
+        let selected2faEmoji = null;
+        let pending2faCommitment = null;
+        let active2faTarget = null;
+        let active2faNonce = null;
+        let active2faPin = null;
         let lastReceivedBlob = null;
         let lastReceivedFilename = '';
         let activeSendFileMap = {}; // Stores lightweight File handles
@@ -3413,7 +3671,10 @@
         let isGpsDiscoveryEnabled = true;
         let isVerifyRepairEnabled = true;
         let userLocationCoords = null; // { lat, lon, acc }
-        const MAX_GEO_PROXIMITY_METERS = 100; // Filter peers within 100 meters
+        let isCloudFallbackEnabled = localStorage.getItem('dropshare_cloud_fallback') !== 'false';
+        const PROXIMITY_TIERS = [5, 10, 50, 100, 500, 1500, 5000]; // Adaptive proximity filters
+        let pin2faVerified = true;
+        let isPinConnection = false;
         const EMOJI_POOL = [
             '🌱', '🌳', '🌵', '🌻', '🍄', '🌊', '🌋', '🏔️', '🏝️', '🏜️',
             '🌌', '🌙', '☀️', '🌈', '⚡️', '❄️', '🌪️', '🔥', '💧', '🪨',
@@ -3492,25 +3753,30 @@
             if (isComplete !== undefined) isReceiveComplete = Boolean(isComplete);
             const isSetUp = isUserSetUp();
             const cancelBtn = document.getElementById('btn-cancel-receiving');
+            const doneBtn = document.getElementById('btn-done-receiving');
             const adCard = document.getElementById('receive-Dropshare-ad');
             const setupBtn = document.getElementById('btn-ad-setup-profile');
             const modalCancelBtn = document.getElementById('recipient-modal-cancel-btn');
 
             if (!isSetUp) {
-                // User has NOT set up a profile: show ad, hide all cancel buttons
+                // Guest receiver: hide cancel buttons and hide Done button even on completion
                 if (cancelBtn) cancelBtn.style.display = 'none';
                 if (modalCancelBtn) modalCancelBtn.style.display = 'none';
+                if (doneBtn) doneBtn.style.display = 'none';
                 if (adCard) adCard.style.display = 'block';
                 if (setupBtn) {
                     setupBtn.style.display = isReceiveComplete ? 'flex' : 'none';
                 }
             } else {
-                // User HAS set up a profile: never show ad or setup button; show cancel button while in progress
+                // Registered user: never show ad; show Done only on completion and Cancel only during progress
                 if (adCard) adCard.style.display = 'none';
                 if (setupBtn) setupBtn.style.display = 'none';
                 if (modalCancelBtn) modalCancelBtn.style.display = 'inline-flex';
                 if (cancelBtn) {
                     cancelBtn.style.display = isReceiveComplete ? 'none' : 'inline-flex';
+                }
+                if (doneBtn) {
+                    doneBtn.style.display = isReceiveComplete ? 'flex' : 'none';
                 }
             }
         }
@@ -3577,36 +3843,22 @@
         }
 
         function initNavigationAPI() {
-            // Only intercept browser-initiated traversals (Back/Forward) to eliminate recursive pushState soft-navigation collisions
-            if ('navigation' in window) {
-                window.navigation.addEventListener('navigate', (event) => {
-                    if (!event.canIntercept || event.navigationType === 'push' || event.navigationType === 'replace') {
-                        return;
-                    }
-                    const url = new URL(event.destination.url);
-                    const targetView = url.hash.replace('#', '');
-                    if (targetView && document.getElementById(targetView)) {
-                        event.intercept({
-                            async handler() {
-                                showView(targetView, false);
-                            }
-                        });
-                    }
-                });
-            }
-
+            // Handle browser Back / Forward buttons and mobile swipe gestures
             window.addEventListener('popstate', () => {
+                // 1. Dismiss any open modals on back action
                 const openModals = document.querySelectorAll('.screenshot-modal.open');
                 if (openModals.length > 0) {
                     openModals.forEach(m => m.classList.remove('open'));
                 }
 
+                // 2. Abort transfer if backing out of active send screen
                 const activeView = document.querySelector('.view.active')?.id;
                 if (activeView === 'view-send') {
                     cancelTransfer(true);
                     return;
                 }
 
+                // 3. Restore previous view in history
                 const targetHash = window.location.hash.replace('#', '');
                 if (targetHash && document.getElementById(targetHash)) {
                     showView(targetHash, false);
@@ -3619,6 +3871,7 @@
                 }
             });
 
+            // Set initial history state
             if (window.location.hash === '' && isUserSetUp()) {
                 window.history.replaceState({ view: 'view-home' }, '', '#view-home');
             }
@@ -3762,10 +4015,14 @@
             const setupDisc = document.getElementById('setup-setting-discoverable');
             const setupGps = document.getElementById('setup-setting-gps-discovery');
             const setupVer = document.getElementById('setup-setting-verify-repair');
+            const sCloud = document.getElementById('setting-cloud-fallback');
+            const sCloudAdv = document.getElementById('setting-cloud-fallback-adv');
             if (setupLang) setupLang.value = currentLang;
             if (setupDisc) setupDisc.checked = isDiscoverable;
             if (setupGps) setupGps.checked = isGpsDiscoveryEnabled;
             if (setupVer) setupVer.checked = isVerifyRepairEnabled;
+            if (sCloud) sCloud.checked = isCloudFallbackEnabled;
+            if (sCloudAdv) sCloudAdv.checked = isCloudFallbackEnabled;
         }
 
         function saveProfile() {
@@ -3865,8 +4122,8 @@
                     if (isGeoClusterActive && userLocationCoords && payload.coords && typeof payload.coords.lat === 'number' && typeof payload.coords.lon === 'number') {
                         peerDistance = calculateHaversineDistance(userLocationCoords.lat, userLocationCoords.lon, payload.coords.lat, payload.coords.lon);
                         peerBearing = calculateBearing(userLocationCoords.lat, userLocationCoords.lon, payload.coords.lat, payload.coords.lon);
-                        // Discard peers outside spatial boundary
-                        if (peerDistance > MAX_GEO_PROXIMITY_METERS) return;
+                        // Accept peers across expanding ranges up to cluster ceiling (5km)
+                        if (peerDistance > PROXIMITY_TIERS[PROXIMITY_TIERS.length - 1]) return;
                     }
 
                     if (payload.type === 'hello') {
@@ -3958,16 +4215,41 @@
             // Dynamic capacity scaling: larger radar box accommodates more items before overflowing
             const MAX_CAPACITY = Math.max(5, Math.min(10, Math.floor((2 * Math.PI * MID_RADIUS * 1.15) / MIN_DISTANCE)));
             
-            const activePeerIds = Object.keys(knownPeers).filter(id => {
-                const el = document.getElementById(`peer-bubble-${id}`);
-                const isBusy = knownPeers[id]?.busy;
-                return (!el || !el.classList.contains('leaving')) && !isBusy;
-            });
-            
-            if (activePeerIds.length === 0) {
+            const activePeersRaw = Object.keys(knownPeers)
+                .filter(id => {
+                    const el = document.getElementById(`peer-bubble-${id}`);
+                    const isBusy = knownPeers[id]?.busy;
+                    return (!el || !el.classList.contains('leaving')) && !isBusy;
+                })
+                .map(id => ({
+                    id,
+                    name: sanitizeProfile(knownPeers[id]).name,
+                    avatar: sanitizeProfile(knownPeers[id]).avatar,
+                    distance: typeof knownPeers[id]?.distance === 'number' ? knownPeers[id].distance : null,
+                    bearing: typeof knownPeers[id]?.bearing === 'number' ? knownPeers[id].bearing : null,
+                    isSpecial: false
+                }));
+
+            // Expanding Tiered Proximity Filter: 5m -> 10m -> 50m -> 100m -> 500m -> 1500m -> 5000m
+            let activeProximityTier = PROXIMITY_TIERS[PROXIMITY_TIERS.length - 1];
+            const peersWithGeo = activePeersRaw.filter(p => p.distance !== null);
+            if (peersWithGeo.length > 0) {
+                for (const tier of PROXIMITY_TIERS) {
+                    if (peersWithGeo.some(p => p.distance <= tier)) {
+                        activeProximityTier = tier;
+                        break;
+                    }
+                }
+            }
+
+            // Include all local LAN peers (null distance) plus geo peers within the current active tier
+            const filteredPeerItems = activePeersRaw.filter(p => p.distance === null || p.distance <= activeProximityTier);
+
+            if (filteredPeerItems.length === 0) {
                 if (statusText) statusText.innerHTML = t('radar_searching');
             } else {
-                if (statusText) statusText.innerHTML = t('radar_found');
+                const rangeLabel = activeProximityTier < 1000 ? `${activeProximityTier}m` : `${(activeProximityTier / 1000).toFixed(1)}km`;
+                if (statusText) statusText.innerHTML = `${t('radar_found')} <span style="opacity:0.6; font-size:12px;">(≤ ${rangeLabel})</span>`;
             }
             
             const systemItems = [];
@@ -3978,18 +4260,8 @@
                 systemItems.push({ id: 'system-code', name: t('pin_code_name'), icon: 'key', isSpecial: true, action: openCodeReceive });
             }
 
-            const allRadarItems = [
-                ...systemItems,
-                ...activePeerIds.map(id => ({ 
-                    id, 
-                    name: sanitizeProfile(knownPeers[id]).name, 
-                    avatar: sanitizeProfile(knownPeers[id]).avatar, 
-                    distance: knownPeers[id]?.distance,
-                    bearing: knownPeers[id]?.bearing,
-                    isSpecial: false 
-                }))
-            ];
-
+            const allRadarItems = [...systemItems, ...filteredPeerItems];
+            
             let displayItems = [];
             if (allRadarItems.length > MAX_CAPACITY) {
                 displayItems = allRadarItems.slice(0, MAX_CAPACITY - 1);
@@ -4181,7 +4453,11 @@
 
                     const nameBadge = document.createElement('span');
                     nameBadge.className = 'peer-bubble-name';
-                    nameBadge.textContent = item.name;
+                    if (!item.isSpecial && item.distance !== null) {
+                        nameBadge.textContent = `${item.name} • ${item.distance}m`;
+                    } else {
+                        nameBadge.textContent = item.name;
+                    }
 
                     floatWrapper.appendChild(ring);
                     floatWrapper.appendChild(nameBadge);
@@ -4206,6 +4482,11 @@
         function initiateSend(targetPeerId = null, preloadedFiles = null) {
             showView('view-send');
             transferCancelled = false;
+            peerAuthorized = false;
+            senderCryptoMasterKey = null;
+            receiverCryptoMasterKey = null;
+            selected2faEmoji = null;
+            pending2faCommitment = null;
             targetPeerIdForTransfer = targetPeerId;
             evaluateNetworkWarnings(targetPeerId, 'send-network-warning');
             document.getElementById('send-ready-state').style.display = 'block';
@@ -4232,13 +4513,18 @@
             const roomId = generateSecureToken(64); // 128 hex characters (512-bit entropy)
             const sessionToken = generateSecureToken(32); // 64 hex characters
             const roomKey = generateSecureToken(64); // 128 hex characters for client-side AES-GCM hash fragment
-            // 6-digit numeric PIN for code-based receiving
             const pinNumber = Math.floor(100000 + Math.random() * 900000).toString();
+
+            currentRoomId = roomId;
+            currentRoomKey = roomKey;
+            currentSessionToken = sessionToken;
+            currentPin = pinNumber;
+
             currentShareUrl = `${window.location.origin}${window.location.pathname}?code=${roomId}&token=${sessionToken}&pin=${pinNumber}#${roomKey}`;
             
             const pinDisplay = document.getElementById('send-pin-display');
             if (pinDisplay) pinDisplay.textContent = `${pinNumber.slice(0, 3)} ${pinNumber.slice(3)}`;
-            savePinRoomMapping(pinNumber, roomId, roomKey);
+            savePinRoomMapping(pinNumber, roomId, sessionToken);
 
             if (targetPeerId) {
                 if (splitView) splitView.classList.add('nearby-transfer');
@@ -4250,6 +4536,7 @@
                 discoverySend({ 
                     type: 'transfer_request', 
                     roomId: roomId, 
+                    token: sessionToken,
                     key: roomKey, 
                     profile: sanitizeProfile(userProfile) 
                 }, targetPeerId);
@@ -4309,13 +4596,16 @@
             const label = document.getElementById('selected-files-label');
             label.innerText = t('selected_for_sharing', { count: files.length });
             
-            // If receiver is already connected, start immediately
-            if (peerIdForTransfer) {
+            // Only start streaming if peer has completed cryptographic verification
+            if (peerIdForTransfer && peerAuthorized && senderCryptoMasterKey) {
                 processSendQueue();
             }
         }
 
-        function initTransferRoom(roomId, role, roomKey = null, isPinMode = false) {
+        function initTransferRoom(roomId, role, roomKey = null, isPinMode = false, connMode = null, connToken = null) {
+            currentRoomId = roomId;
+            currentRoomKey = roomKey;
+
             // Keep discovery room alive while waiting for approval from nearby device
             if (discoveryRoomObj && !targetPeerIdForTransfer) {
                 try { discoveryRoomObj.leave(); } catch(e){}
@@ -4325,33 +4615,33 @@
                 try { transferRoomObj.leave(); } catch(e){}
             }
 
-            // Apply AES-GCM room password to encrypt all WebRTC SDP negotiation data across trackers
-            const secureConfig = roomKey ? { ...CONFIG, password: roomKey } : CONFIG;
-            transferRoomObj = window.Trystero.joinRoom(secureConfig, roomId);
+            // Zero-Trust: roomId provides 512 bits of unguessable entropy on tracker swarms
+            transferRoomObj = window.Trystero.joinRoom(CONFIG, roomId);
             [transferSend, transferGet] = transferRoomObj.makeAction('transfer');
             [sendChunk, getChunk] = transferRoomObj.makeAction('chunk');
             const [send2FA, get2FA] = transferRoomObj.makeAction('pin2fa');
 
-            let pin2faVerified = !isPinMode && (role === 'receiver'); // QR receiver doesn't require PIN 2FA
+            // Sender authorization flag: STRICTLY FALSE until cryptographic verification
+            peerAuthorized = false;
+            senderCryptoMasterKey = null;
+            receiverCryptoMasterKey = null;
+            selected2faEmoji = null;
+            pending2faCommitment = null;
 
+            // 2FA Protocol Actions
             get2FA(async (payload, peerId) => {
-                if (payload.type === 'init_pin_auth') {
-                    // Receiver connected via PIN: Sender awaits challenge
-                    pin2faVerified = false;
-                } else if (payload.type === 'challenge') {
-                    // Sender receives emoji options from recipient
+                if (payload.type === 'challenge') {
+                    // Sender receives recipient's commitment and distractor pool
+                    pending2faCommitment = payload.commitment;
                     renderSenderEmojiPicker(payload.options, (chosenEmoji) => {
+                        selected2faEmoji = chosenEmoji;
                         send2FA({ type: 'answer', answer: chosenEmoji }, peerId);
                     });
                 } else if (payload.type === 'answer') {
-                    // Recipient validates sender's selected emoji
-                    const targetEl = document.getElementById('recipient-target-emoji');
-                    const targetEmoji = targetEl ? targetEl.textContent.trim() : '';
-                    if (payload.answer === targetEmoji) {
-                        send2FA({ type: 'verified' }, peerId);
-                        document.getElementById('recipient-emoji-modal').classList.remove('open');
-                        showLoading(t('verified'));
-                        setTimeout(hideLoading, 1500);
+                    // Recipient validates sender's selection against the committed secret
+                    if (payload.answer === active2faTarget) {
+                        // Reveal secret nonce to sender for commitment verification
+                        send2FA({ type: 'reveal', nonce: active2faNonce }, peerId);
                     } else {
                         send2FA({ type: 'failed' }, peerId);
                         document.getElementById('recipient-emoji-modal').classList.remove('open');
@@ -4359,32 +4649,120 @@
                         setTimeout(hideLoading, 2000);
                         cancelTransfer(false);
                     }
-                } else if (payload.type === 'verified') {
-                    // Sender successfully verified
+                } else if (payload.type === 'reveal') {
+                    // Sender cryptographically validates receiver's pre-commitment
+                    const check = await computeSha256Text(selected2faEmoji + ":" + payload.nonce + ":" + currentPin);
+                    if (check !== pending2faCommitment) {
+                        console.error("[Dropshare] Security violation: 2FA commitment mismatch!");
+                        send2FA({ type: 'failed' }, peerId);
+                        cancelTransfer(false);
+                        return;
+                    }
+
+                    // Derive shared Emoji Authentication Key to grant masterKey
+                    const emojiSecret = "EMOJI_AUTH:" + selected2faEmoji + ":" + payload.nonce + ":" + currentPin;
+                    const emojiCryptoKey = await importKeyFromSecret(emojiSecret);
+                    const iv = crypto.getRandomValues(new Uint8Array(12));
+                    const encKey = await crypto.subtle.encrypt(
+                        { name: 'AES-GCM', iv },
+                        emojiCryptoKey,
+                        new TextEncoder().encode(currentRoomKey)
+                    );
+
+                    send2FA({
+                        type: 'key_grant',
+                        encKey: Array.from(new Uint8Array(encKey)),
+                        iv: Array.from(iv)
+                    }, peerId);
+
+                    // Sender authorizes transfer channel
+                    peerAuthorized = true;
+                    senderCryptoMasterKey = await importKeyFromSecret(currentRoomKey);
                     document.getElementById('sender-emoji-modal').classList.remove('open');
-                    pin2faVerified = true;
                     showLoading(t('verified'));
                     setTimeout(hideLoading, 1500);
+
+                    const subText = document.getElementById('send-view-sub');
+                    if (subText) subText.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">check</span>${t('recipient_connected')}`;
+
                     if (activeSendQueue.length > 0) {
                         processSendQueue();
                     }
+                } else if (payload.type === 'key_grant') {
+                    // Recipient decrypts masterKey using verified emoji parameters
+                    try {
+                        const emojiSecret = "EMOJI_AUTH:" + active2faTarget + ":" + active2faNonce + ":" + active2faPin;
+                        const emojiCryptoKey = await importKeyFromSecret(emojiSecret);
+                        const dec = await crypto.subtle.decrypt(
+                            { name: 'AES-GCM', iv: new Uint8Array(payload.iv) },
+                            emojiCryptoKey,
+                            new Uint8Array(payload.encKey)
+                        );
+                        const decryptedRoomKey = new TextDecoder().decode(dec);
+                        currentRoomKey = decryptedRoomKey;
+                        receiverCryptoMasterKey = await importKeyFromSecret(decryptedRoomKey);
+
+                        document.getElementById('recipient-emoji-modal').classList.remove('open');
+                        showLoading(t('verified'));
+                        setTimeout(hideLoading, 1500);
+                        document.getElementById('receive-status').innerHTML = `<svg class="loading-spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;"><rect width="100%" height="100%" fill="var(--accent)" stroke="none" class="loading-spinner-ind" /></svg>${t('waiting_for_files')}`;
+                    } catch (err) {
+                        console.error("[Dropshare] Master key grant decryption error:", err);
+                        cancelTransfer(false);
+                    }
                 } else if (payload.type === 'failed') {
-                    // Sender entered incorrect emoji
                     document.getElementById('sender-emoji-modal').classList.remove('open');
-                    showLoading(t('incorrect_emoji'));
-                    setTimeout(hideLoading, 2500);
+                    document.getElementById('recipient-emoji-modal').classList.remove('open');
+                    showLoading(t('verification_failed'));
+                    setTimeout(hideLoading, 2000);
                     cancelTransfer(false);
                 }
             });
 
             transferGet(async (payload, peerId) => {
+                if (payload.type === 'handshake') {
+                    if (role === 'sender') {
+                        if (payload.mode === 'qr') {
+                            const expectedProof = await computeSha256Text("QR_AUTH:" + currentSessionToken + ":" + currentRoomKey);
+                            if (payload.proof === expectedProof) {
+                                peerAuthorized = true;
+                                senderCryptoMasterKey = await importKeyFromSecret(currentRoomKey);
+                                const subText = document.getElementById('send-view-sub');
+                                if (subText) subText.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">check</span>${t('recipient_connected')}`;
+                                if (activeSendQueue.length > 0) processSendQueue();
+                            } else {
+                                console.error("[Dropshare] Security violation: Invalid QR authentication proof!");
+                                cancelTransfer(false);
+                            }
+                        } else if (payload.mode === 'radar') {
+                            const expectedProof = await computeSha256Text("RADAR_AUTH:" + currentSessionToken + ":" + currentRoomKey);
+                            if (payload.proof === expectedProof) {
+                                peerAuthorized = true;
+                                senderCryptoMasterKey = await importKeyFromSecret(currentRoomKey);
+                                const subText = document.getElementById('send-view-sub');
+                                if (subText) subText.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">check</span>${t('recipient_connected')}`;
+                                if (activeSendQueue.length > 0) processSendQueue();
+                            } else {
+                                console.error("[Dropshare] Security violation: Invalid Radar authentication proof!");
+                                cancelTransfer(false);
+                            }
+                        } else if (payload.mode === 'pin') {
+                            // PIN Mode: peerAuthorized remains false until 2FA completes
+                            peerAuthorized = false;
+                            const subText = document.getElementById('send-view-sub');
+                            if (subText) subText.innerHTML = `<svg class="loading-spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;"><rect width="100%" height="100%" fill="var(--accent)" stroke="none" class="loading-spinner-ind" /></svg>Waiting for verification challenge...`;
+                        }
+                    }
+                    return;
+                }
+
                 if (payload.type === 'transfer_abort') {
                     hideLoading();
                     showLoading(t('transfer_cancelled_other'));
                     setTimeout(hideLoading, 2000);
                     cancelTransfer(false);
                 } else if (payload.type === 'repair_request') {
-                    // Retransmit dropped chunks as pure binary directly from disk
+                    if (!peerAuthorized || !senderCryptoMasterKey) return;
                     const { name, chunkIndices } = payload;
                     const file = activeSendFileMap[name];
                     if (!file || !chunkIndices || !Array.isArray(chunkIndices)) return;
@@ -4395,8 +4773,16 @@
                         const end = Math.min(start + CHUNK_SIZE, file.size);
                         const slice = file.slice(start, end);
                         const chunkBuf = await slice.arrayBuffer();
+
+                        // Encrypt repair chunk with AES-GCM
+                        const iv = crypto.getRandomValues(new Uint8Array(12));
+                        const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, senderCryptoMasterKey, chunkBuf);
+                        const packed = new Uint8Array(12 + cipher.byteLength);
+                        packed.set(iv, 0);
+                        packed.set(new Uint8Array(cipher), 12);
+
                         if (sendChunk) {
-                            await sendChunk(chunkBuf, peerId, {
+                            await sendChunk(packed.buffer, peerId, {
                                 name: file.name,
                                 index: idx,
                                 total: totalChunks
@@ -4410,27 +4796,21 @@
 
             if (role === 'sender') {
                 transferRoomObj.onPeerJoin(peerId => {
-                    if (peerIdForTransfer && peerIdForTransfer !== peerId) {
-                        return;
-                    }
+                    if (peerIdForTransfer && peerIdForTransfer !== peerId) return;
                     hideLoading();
                     peerIdForTransfer = peerId;
                     if (discoveryRoomObj) {
                         try { discoveryRoomObj.leave(); } catch(e){}
                         discoveryRoomObj = null;
                     }
-                    const subText = document.getElementById('send-view-sub');
                     evaluateNetworkWarnings(peerId, 'send-network-warning');
-                    if (subText) subText.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">check</span>${t('recipient_connected')}`;
-
-                    // If PIN 2FA is not in progress or already verified, start queue
-                    if (pin2faVerified && activeSendQueue.length > 0) {
-                        processSendQueue();
-                    }
+                    // DO NOT start processSendQueue here: await cryptographic handshake/2FA
                 });
+
                 transferRoomObj.onPeerLeave(peerId => {
                     if (peerIdForTransfer === peerId) {
                         peerIdForTransfer = null;
+                        peerAuthorized = false;
                         document.getElementById('sender-emoji-modal').classList.remove('open');
                         const subText = document.getElementById('send-view-sub');
                         if (subText) subText.innerText = t('recipient_disconnected');
@@ -4438,24 +4818,41 @@
                 });
             } else if (role === 'receiver') {
                 setupReceiverLogic();
-                transferRoomObj.onPeerJoin(peerId => {
+                transferRoomObj.onPeerJoin(async peerId => {
                     if (peerIdForTransfer && peerIdForTransfer !== peerId) return;
                     peerIdForTransfer = peerId;
                     evaluateNetworkWarnings(peerId, 'receive-network-warning');
 
-                    if (isPinMode) {
-                        // Start PIN 2FA: Pick target emoji and 3 random distractors
+                    if (connMode === 'qr' && roomKey && connToken) {
+                        receiverCryptoMasterKey = await importKeyFromSecret(roomKey);
+                        const qrProof = await computeSha256Text("QR_AUTH:" + connToken + ":" + roomKey);
+                        transferSend({ type: 'handshake', mode: 'qr', proof: qrProof }, peerId);
+                        document.getElementById('receive-status').innerHTML = `<svg class="loading-spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;"><rect width="100%" height="100%" fill="var(--accent)" stroke="none" class="loading-spinner-ind" /></svg>${t('waiting_for_files')}`;
+                    } else if (connMode === 'radar' && roomKey && connToken) {
+                        receiverCryptoMasterKey = await importKeyFromSecret(roomKey);
+                        const radarProof = await computeSha256Text("RADAR_AUTH:" + connToken + ":" + roomKey);
+                        transferSend({ type: 'handshake', mode: 'radar', proof: radarProof }, peerId);
+                        document.getElementById('receive-status').innerHTML = `<svg class="loading-spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;"><rect width="100%" height="100%" fill="var(--accent)" stroke="none" class="loading-spinner-ind" /></svg>${t('waiting_for_files')}`;
+                    } else if (connMode === 'pin' || isPinMode) {
+                        receiverCryptoMasterKey = null;
+                        transferSend({ type: 'handshake', mode: 'pin' }, peerId);
+
+                        // Initiate PIN Emoji 2FA: Select secret target & compute commitment
                         const shuffledPool = [...EMOJI_POOL].sort(() => Math.random() - 0.5);
                         const targetEmoji = shuffledPool[0];
                         const options = shuffledPool.slice(0, 4).sort(() => Math.random() - 0.5);
+                        const nonce = generateSecureToken(16);
+
+                        active2faTarget = targetEmoji;
+                        active2faNonce = nonce;
+                        active2faPin = currentPin;
+
+                        const commitment = await computeSha256Text(targetEmoji + ":" + nonce + ":" + currentPin);
 
                         document.getElementById('recipient-target-emoji').textContent = targetEmoji;
                         document.getElementById('recipient-emoji-modal').classList.add('open');
 
-                        send2FA({ type: 'init_pin_auth' }, peerId);
-                        send2FA({ type: 'challenge', options: options }, peerId);
-                    } else {
-                        document.getElementById('receive-status').innerHTML = `<svg class="loading-spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;"><rect width="100%" height="100%" fill="var(--accent)" stroke="none" class="loading-spinner-ind" /></svg>${t('waiting_for_files')}`;
+                        send2FA({ type: 'challenge', options, commitment }, peerId);
                     }
                 });
             }
@@ -4466,8 +4863,95 @@
             return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
+        async function executeCloudSend(file) {
+            try {
+                // 1. Gzip compression
+                const compressed = await compressBlob(file);
+                const rawBuffer = await compressed.arrayBuffer();
+
+                // 2. 256-bit AES-GCM encryption with roomKey
+                const encrypted = await encryptBuffer(rawBuffer, currentRoomKey);
+                const encBlob = new Blob([encrypted], { type: 'application/octet-stream' });
+
+                // 3. Upload encrypted payload
+                const dlUrl = await uploadEncryptedCloudFile(encBlob, (pct) => {
+                    updateProgress('send', pct * 0.95);
+                });
+
+                const meta = {
+                    url: dlUrl,
+                    name: file.name,
+                    size: file.size,
+                    mime: file.type || 'application/octet-stream'
+                };
+
+                // Notify receiver via rendezvous & control channel
+                await relayFallbackMetadata(currentRoomId, meta);
+                if (transferSend && peerIdForTransfer) {
+                    try { transferSend({ type: 'cloud_fallback', meta }, peerIdForTransfer); } catch(e){}
+                }
+
+                updateProgress('send', 100);
+                return true;
+            } catch (err) {
+                console.warn("[Dropshare] Cloud fallback send error:", err);
+                return false;
+            }
+        }
+
+        async function executeCloudReceive(meta, secretKey) {
+            if (isReceiveComplete || transferCancelled || !meta || !meta.url) return;
+            try {
+                document.getElementById('receive-status').style.display = 'none';
+                document.getElementById('receive-progress-container').style.display = 'block';
+                document.getElementById('receive-filename').textContent = t('receiving_file', { name: sanitizeFilename(meta.name) });
+                document.getElementById('btn-done-receiving').style.display = 'none';
+                document.getElementById('btn-redownload-receiving').style.display = 'none';
+                updateReceiverGuestUI(false);
+                updateProgress('receive', 0);
+
+                const resp = await fetch(meta.url);
+                if (!resp.ok) throw new Error("Cloud fetch failed");
+                const totalBytes = parseInt(resp.headers.get('content-length'), 10) || meta.size || 0;
+
+                const reader = resp.body.getReader();
+                let receivedBytes = 0;
+                const chunks = [];
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    receivedBytes += value.length;
+                    if (totalBytes > 0) {
+                        updateProgress('receive', (receivedBytes / totalBytes) * 100);
+                    }
+                }
+
+                // Concatenate downloaded cipher
+                const cipherAll = new Uint8Array(receivedBytes);
+                let offset = 0;
+                for (const c of chunks) {
+                    cipherAll.set(c, offset);
+                    offset += c.length;
+                }
+
+                // Decrypt and decompress seamlessly
+                const decryptedBuf = await decryptBuffer(cipherAll.buffer, secretKey || currentRoomKey);
+                const decompressed = await decompressBlob(new Blob([decryptedBuf]));
+                const finalBuf = await decompressed.arrayBuffer();
+
+                finalizeReceivedFile(finalBuf, meta);
+            } catch (e) {
+                console.warn("[Dropshare] Cloud fallback receive error:", e);
+            }
+        }
+
         async function processSendQueue() {
-            if (activeSendQueue.length === 0 || !peerIdForTransfer) return;
+            // Enforce cryptographic authorization before sending a single byte
+            if (!peerAuthorized || !senderCryptoMasterKey || activeSendQueue.length === 0 || !peerIdForTransfer) {
+                return;
+            }
             transferCancelled = false;
             activeSendFileMap = {};
             
@@ -4492,7 +4976,7 @@
                     totalChunks: totalChunks
                 }, peerIdForTransfer);
 
-                // 2. Stream pure binary ArrayBuffers without JSON serialization
+                // 2. Stream AES-GCM encrypted chunks directly from disk
                 for (let i = 0; i < totalChunks; i++) {
                     if (transferCancelled) return;
 
@@ -4501,8 +4985,20 @@
                     const chunkSlice = file.slice(start, end);
                     const chunkBuffer = await chunkSlice.arrayBuffer();
 
+                    // Encrypt every chunk with masterKey: unauthorized peers cannot decrypt
+                    const iv = crypto.getRandomValues(new Uint8Array(12));
+                    const encryptedChunk = await crypto.subtle.encrypt(
+                        { name: 'AES-GCM', iv },
+                        senderCryptoMasterKey,
+                        chunkBuffer
+                    );
+
+                    const packet = new Uint8Array(12 + encryptedChunk.byteLength);
+                    packet.set(iv, 0);
+                    packet.set(new Uint8Array(encryptedChunk), 12);
+
                     if (sendChunk) {
-                        await sendChunk(chunkBuffer, peerIdForTransfer, {
+                        await sendChunk(packet.buffer, peerIdForTransfer, {
                             name: file.name,
                             index: i,
                             total: totalChunks
@@ -4512,7 +5008,6 @@
                     const percent = ((i + 1) / totalChunks) * 100;
                     updateProgress('send', percent);
 
-                    // Yield to the browser event loop every 4 chunks to maintain 60fps and smooth buffer drain
                     if (i % 4 === 0) {
                         await new Promise(r => setTimeout(r, 1));
                     }
@@ -4553,20 +5048,28 @@
 
         function cancelTransfer(notifyPeer = true) {
             transferCancelled = true;
+            peerAuthorized = false;
+            senderCryptoMasterKey = null;
+            receiverCryptoMasterKey = null;
+            selected2faEmoji = null;
+            pending2faCommitment = null;
+            active2faTarget = null;
+            active2faNonce = null;
+            active2faPin = null;
             isReceiveComplete = false;
             activeSendFileMap = {};
             hideLoading();
             document.getElementById('sender-emoji-modal').classList.remove('open');
             document.getElementById('recipient-emoji-modal').classList.remove('open');
+
+            if (window._currentPinSyncRoom) {
+                try { window._currentPinSyncRoom.leave(); } catch(e) {}
+                window._currentPinSyncRoom = null;
+            }
+
             if (notifyPeer && targetPeerIdForTransfer && discoverySend) {
                 try {
                     discoverySend({ type: 'transfer_cancelled' }, targetPeerIdForTransfer);
-                } catch(e) {}
-            }
-
-            if (notifyPeer && transferSend && peerIdForTransfer) {
-                try {
-                    transferSend({ type: 'transfer_abort' }, peerIdForTransfer);
                 } catch(e) {}
             }
 
@@ -4586,11 +5089,10 @@
         }
 
         // --- Receive Logic ---
-        let incomingRoomKey = null;
-
         function handleIncomingTransferRequest(payload, peerId) {
             incomingRoomId = payload.roomId;
             incomingRoomKey = payload.key || null;
+            incomingSessionToken = payload.token || null;
             incomingSenderPeerId = peerId;
             const profile = sanitizeProfile(payload.profile);
             
@@ -4607,6 +5109,7 @@
             }
             incomingRoomId = null;
             incomingRoomKey = null;
+            incomingSessionToken = null;
             incomingSenderPeerId = null;
         }
 
@@ -4614,9 +5117,10 @@
             document.getElementById('incoming-modal').classList.remove('open');
             if (incomingRoomId) {
                 showView('view-receive');
-                initTransferRoom(incomingRoomId, 'receiver', incomingRoomKey);
+                initTransferRoom(incomingRoomId, 'receiver', incomingRoomKey, false, 'radar', incomingSessionToken);
                 incomingRoomId = null;
                 incomingRoomKey = null;
+                incomingSessionToken = null;
                 incomingSenderPeerId = null;
             }
         }
@@ -4625,15 +5129,30 @@
             let activeFileMeta = null;
             let activeFileChunks = [];
 
-            // Listen for raw binary chunk streaming with zero JSON serialization overhead
+            // Critical Security: Decrypt incoming stream chunks with masterKey
             if (getChunk) {
-                getChunk((chunkBuffer, peerId, metadata) => {
+                getChunk(async (packedBuffer, peerId, metadata) => {
                     if (peerIdForTransfer && peerId !== peerIdForTransfer) return;
                     if (!activeFileMeta || !metadata || metadata.name !== activeFileMeta.name) return;
+                    if (!receiverCryptoMasterKey) {
+                        console.warn("[Dropshare] Dropping chunk: Master decryption key not authorized");
+                        return;
+                    }
 
-                    activeFileChunks[metadata.index] = chunkBuffer;
-                    const percent = ((metadata.index + 1) / activeFileMeta.totalChunks) * 100;
-                    updateProgress('receive', percent);
+                    try {
+                        const iv = packedBuffer.slice(0, 12);
+                        const ciphertext = packedBuffer.slice(12);
+                        const decryptedChunk = await crypto.subtle.decrypt(
+                            { name: 'AES-GCM', iv: new Uint8Array(iv) },
+                            receiverCryptoMasterKey,
+                            ciphertext
+                        );
+                        activeFileChunks[metadata.index] = decryptedChunk;
+                        const percent = ((metadata.index + 1) / activeFileMeta.totalChunks) * 100;
+                        updateProgress('receive', percent);
+                    } catch (decryptErr) {
+                        console.error("[Dropshare] Chunk decryption failed! Key mismatch or tampering:", decryptErr);
+                    }
                 });
             }
 
@@ -4656,7 +5175,7 @@
                 } else if (payload.type === 'file_end') {
                     if (!activeFileMeta || activeFileMeta.name !== payload.name) return;
 
-                    // Verify whether all binary chunks arrived
+                    // Verify whether all decrypted binary chunks arrived
                     const missingChunks = [];
                     for (let i = 0; i < activeFileMeta.totalChunks; i++) {
                         if (!activeFileChunks[i]) {
@@ -4712,10 +5231,14 @@
         
         function handleDoneReceiving() {
             if (!isUserSetUp()) {
+                if (window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
                 setSetupStep(1, false);
                 showView('view-profile-setup');
                 return;
             }
+            goHome(true);
         }
 
         function redownloadLastFile() {
@@ -4778,6 +5301,15 @@
 
         function toggleVerifyRepair(enabled) {
             isVerifyRepairEnabled = enabled;
+        }
+
+        function toggleCloudFallback(enabled) {
+            isCloudFallbackEnabled = enabled;
+            localStorage.setItem('dropshare_cloud_fallback', enabled ? 'true' : 'false');
+            const s1 = document.getElementById('setting-cloud-fallback');
+            const s2 = document.getElementById('setting-cloud-fallback-adv');
+            if (s1) s1.checked = enabled;
+            if (s2) s2.checked = enabled;
         }
 
         function setFeatureToggle(feature, enabled) {
@@ -4918,14 +5450,24 @@
         }
 
         // --- 6-Digit PIN Code Receiving ---
-        async function savePinRoomMapping(pin, roomId, key) {
+        async function savePinRoomMapping(pin, roomId, sessionToken) {
             try {
+                if (window._currentPinSyncRoom) {
+                    try { window._currentPinSyncRoom.leave(); } catch (e) {}
+                    window._currentPinSyncRoom = null;
+                }
                 const pinSalt = 'dropshare-pin-v1';
                 const pinRoomHash = await getSecureRoomId('pin-' + pin, pinSalt);
                 const pinSyncRoom = window.Trystero.joinRoom(CONFIG, pinRoomHash);
+                window._currentPinSyncRoom = pinSyncRoom;
                 const [sendInfo] = pinSyncRoom.makeAction('pinInfo');
                 pinSyncRoom.onPeerJoin(peerId => {
-                    sendInfo({ roomId, key }, peerId);
+                    // Security enforcement: NEVER share master encryption key over PIN sync channel!
+                    sendInfo({ roomId, sessionToken }, peerId);
+                    setTimeout(() => {
+                        try { pinSyncRoom.leave(); } catch (e) {}
+                        if (window._currentPinSyncRoom === pinSyncRoom) window._currentPinSyncRoom = null;
+                    }, 2000);
                 });
             } catch (e) { console.error("PIN Mapping error:", e); }
         }
@@ -4944,6 +5486,7 @@
             }
 
             showLoading(t('connecting_with_pin'));
+            currentPin = rawPin;
             const pinSalt = 'dropshare-pin-v1';
             const pinRoomHash = await getSecureRoomId('pin-' + rawPin, pinSalt);
             const pinSyncRoom = window.Trystero.joinRoom(CONFIG, pinRoomHash);
@@ -4957,7 +5500,8 @@
                 pinSyncRoom.leave();
                 showView('view-receive');
                 evaluateNetworkWarnings(null, 'receive-network-warning');
-                initTransferRoom(payload.roomId, 'receiver', payload.key, true);
+                // PIN receiver connects with NULL key; masterKey is only granted after 2FA Emoji verification
+                initTransferRoom(payload.roomId, 'receiver', null, true, 'pin', payload.sessionToken);
             });
 
             setTimeout(() => {
@@ -4971,12 +5515,53 @@
         }
 
         // --- Rooms & Messaging System (from Messages App) ---
-        let currentRoomId = null;
+        const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
         let savedRooms = [];
         let roomMessagesDB = {};
         let activeRoomConnections = {};
         let roomReplyingMsg = null;
         let roomTypingTimer = null;
+
+        function copyRoomId(id) {
+            if (!id) return;
+            navigator.clipboard.writeText(id).then(() => {
+                showLoading(t('room_id_copied'));
+                setTimeout(hideLoading, 1500);
+            }).catch(() => {
+                prompt("Room ID:", id);
+            });
+        }
+
+        function showRoomPassword(roomId) {
+            const roomObj = savedRooms.find(r => r.id === roomId);
+            if (!roomObj) return;
+            if (roomObj.password) {
+                alert(`${t('password_label')}: ${roomObj.password}`);
+            } else {
+                showLoading(t('room_public_no_pass'));
+                setTimeout(hideLoading, 2000);
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes || isNaN(bytes)) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function getFileExpiryInfo(fileTimestamp) {
+            const elapsed = Date.now() - (fileTimestamp || Date.now());
+            if (elapsed >= TWO_HOURS_MS) {
+                return { expired: true, text: t('file_expired') };
+            }
+            const remainingMins = Math.ceil((TWO_HOURS_MS - elapsed) / 60000);
+            if (remainingMins > 60) {
+                return { expired: false, text: `${Math.floor(remainingMins / 60)}h ${remainingMins % 60}m left` };
+            }
+            return { expired: false, text: `${remainingMins}m left` };
+        }
 
         async function getSecureRoomId(chatId, password) {
             if (!password) return chatId;
@@ -5021,9 +5606,12 @@
                     </div>
                     <div style="flex:1; min-width:0;">
                         <div style="font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${room.name}</div>
-                        <div style="font-size:12px; opacity:0.6;">${t('id_label', { id: room.id })}</div>
+                        <div style="display:flex; align-items:center; gap:6px; font-size:12px; opacity:0.6;">
+                            <span>ID: ${room.id}</span>
+                            <span class="material-symbols-rounded" style="font-size:13px; cursor:pointer;" onclick="event.stopPropagation(); copyRoomId('${room.id}')" title="Copy ID">content_copy</span>
+                        </div>
                     </div>
-                    ${room.password ? '<span class="material-symbols-rounded" style="font-size:18px; opacity:0.6;">lock</span>' : ''}
+                    ${room.password ? `<span class="material-symbols-rounded" style="font-size:20px; opacity:0.7; cursor:pointer; padding:4px;" onclick="event.stopPropagation(); showRoomPassword('${room.id}')" title="Tap to view password">lock</span>` : `<span class="material-symbols-rounded" style="font-size:20px; opacity:0.3; cursor:pointer; padding:4px;" onclick="event.stopPropagation(); showRoomPassword('${room.id}')" title="Public room">lock_open</span>`}
                     <button class="icon-btn" onclick="event.stopPropagation(); deleteRoom('${room.id}')" title="${t('delete_and_leave_room')}" style="background:transparent; border:none; box-shadow:none; padding:8px; color:var(--text-color);">
                         <span class="material-symbols-rounded" style="font-size:20px; opacity:0.6;">delete</span>
                     </button>
@@ -5101,6 +5689,7 @@
             const roomObj = savedRooms.find(r => r.id === roomId) || { id: roomId, name: 'Room', password: '' };
             
             document.getElementById('room-chat-title').textContent = roomObj.name;
+            document.getElementById('room-chat-id-label').textContent = `ID: ${roomObj.id}`;
             document.getElementById('room-chat-lock').textContent = roomObj.password ? 'lock' : 'lock_open';
             document.getElementById('room-chat-status').textContent = t('connecting');
             
@@ -5133,7 +5722,14 @@
             container.innerHTML = '';
             try {
                 const raw = localStorage.getItem(`room_history_${roomId}`);
-                roomMessagesDB[roomId] = raw ? JSON.parse(raw) : [];
+                const msgs = raw ? JSON.parse(raw) : [];
+                // Clean up expired files (> 2 hours old) to protect storage
+                roomMessagesDB[roomId] = msgs.map(m => {
+                    if (m.file && (Date.now() - (m.file.timestamp || m.timestamp) >= TWO_HOURS_MS)) {
+                        return { ...m, file: { ...m.file, data: null, expired: true } };
+                    }
+                    return m;
+                });
             } catch (e) { roomMessagesDB[roomId] = []; }
 
             if (roomMessagesDB[roomId].length === 0) {
@@ -5146,8 +5742,27 @@
 
         function saveRoomHistory(roomId) {
             try {
-                localStorage.setItem(`room_history_${roomId}`, JSON.stringify(roomMessagesDB[roomId] || []));
-            } catch (e) {}
+                // Strip expired file payloads prior to serialization
+                const cleanHistory = (roomMessagesDB[roomId] || []).map(m => {
+                    if (m.file && (Date.now() - (m.file.timestamp || m.timestamp) >= TWO_HOURS_MS)) {
+                        return { ...m, file: { ...m.file, data: null, expired: true } };
+                    }
+                    return m;
+                });
+                localStorage.setItem(`room_history_${roomId}`, JSON.stringify(cleanHistory));
+            } catch (e) {
+                console.warn("[Rooms] QuotaExceededError in localStorage, pruning attachments:", e);
+                try {
+                    // Evict payload data from oldest messages to keep recent chat operational
+                    const pruned = (roomMessagesDB[roomId] || []).slice(-25).map(m => {
+                        if (m.file && m.file.data && m.file.data.length > 50000) {
+                            return { ...m, file: { ...m.file, data: null, expired: true } };
+                        }
+                        return m;
+                    });
+                    localStorage.setItem(`room_history_${roomId}`, JSON.stringify(pruned));
+                } catch (err2) {}
+            }
         }
 
         async function joinRoomNetwork(roomObj) {
@@ -5295,11 +5910,56 @@
                 bubble.appendChild(txt);
             }
 
-            if (msg.image) {
-                const img = document.createElement('img');
-                img.className = 'message-image';
-                img.src = msg.image;
-                bubble.appendChild(img);
+            // Handle Images vs. Non-Image File Attachments with 2-hour expiration
+            if (msg.file) {
+                const fileObj = msg.file;
+                const expiry = getFileExpiryInfo(fileObj.timestamp || msg.timestamp);
+
+                if (fileObj.isImage && !expiry.expired && fileObj.data) {
+                    const img = document.createElement('img');
+                    img.className = 'message-image';
+                    img.src = fileObj.data;
+                    img.alt = fileObj.name || 'Image';
+                    bubble.appendChild(img);
+                } else {
+                    // Non-image file card (PDF, ZIP, DOC, etc.) or expired image
+                    const fileCard = document.createElement('div');
+                    fileCard.className = 'chat-file-card';
+                    
+                    const iconName = expiry.expired ? 'timer_off' : (fileObj.isImage ? 'image' : 'description');
+                    const metaText = expiry.expired 
+                        ? `${formatFileSize(fileObj.size)} • ${expiry.text}` 
+                        : `${formatFileSize(fileObj.size)} • ${expiry.text}`;
+
+                    fileCard.innerHTML = `
+                        <div class="chat-file-icon" style="${expiry.expired ? 'background:rgba(255,255,255,0.2);' : ''}">
+                            <span class="material-symbols-rounded">${iconName}</span>
+                        </div>
+                        <div class="chat-file-info">
+                            <div class="chat-file-name">${sanitizeFilename(fileObj.name)}</div>
+                            <div class="chat-file-meta" style="${expiry.expired ? 'color:#ff5555; opacity:1;' : ''}">${metaText}</div>
+                        </div>
+                        ${!expiry.expired && fileObj.data ? `
+                            <button class="icon-btn" style="width:34px; height:34px; padding:0; flex-shrink:0;" title="Download">
+                                <span class="material-symbols-rounded" style="font-size:18px;">download</span>
+                            </button>
+                        ` : ''}
+                    `;
+
+                    if (!expiry.expired && fileObj.data) {
+                        fileCard.querySelector('button')?.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const a = document.createElement('a');
+                            a.href = fileObj.data;
+                            a.download = sanitizeFilename(fileObj.name);
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                        });
+                    }
+
+                    bubble.appendChild(fileCard);
+                }
             }
 
             if (msg.poll) {
@@ -5343,10 +6003,10 @@
             if (container) container.scrollTop = container.scrollHeight;
         }
 
-        async function sendRoomMessage(imagePayload = null, pollPayload = null) {
+        async function sendRoomMessage(filePayload = null, pollPayload = null) {
             const input = document.getElementById('room-message-input');
             const text = input ? input.value.trim() : '';
-            if (!text && !imagePayload && !pollPayload) return;
+            if (!text && !filePayload && !pollPayload) return;
             if (!currentRoomId || !activeRoomConnections[currentRoomId]) return;
 
             const msg = {
@@ -5355,11 +6015,23 @@
                 senderName: userProfile.name,
                 avatar: userProfile.avatar,
                 text: text,
-                image: imagePayload,
+                file: filePayload,
                 poll: pollPayload,
                 timestamp: Date.now(),
                 replyTo: roomReplyingMsg ? { id: roomReplyingMsg.id, sender: roomReplyingMsg.senderName, text: roomReplyingMsg.text || 'Attachment' } : null
             };
+
+            // Prevent large payload crash on WebRTC data channel
+            try {
+                const serializedLength = JSON.stringify(msg).length;
+                if (serializedLength > 2 * 1024 * 1024) { // 2MB safe serialization cap
+                    showLoading(t('file_too_large_room'));
+                    setTimeout(hideLoading, 3000);
+                    return;
+                }
+            } catch (e) {
+                return;
+            }
 
             cancelRoomReply();
             roomMessagesDB[currentRoomId] = roomMessagesDB[currentRoomId] || [];
@@ -5385,10 +6057,53 @@
         async function handleRoomFileAttach(input) {
             if (!input.files || !input.files[0]) return;
             const file = input.files[0];
+            input.value = '';
+
+            // Cap file attachments at 5MB to prevent WebRTC mesh broadcast crashes
+            if (file.size > 5 * 1024 * 1024) {
+                showLoading(t('file_too_large_room'));
+                setTimeout(hideLoading, 3500);
+                return;
+            }
+
+            const isImg = file.type.startsWith('image/');
             const reader = new FileReader();
-            reader.onload = (e) => {
-                sendRoomMessage(e.target.result);
-                input.value = '';
+
+            reader.onload = async (e) => {
+                let dataPayload = e.target.result;
+
+                // Compress large images to keep room payload lightweight
+                if (isImg && !file.type.includes('gif')) {
+                    try {
+                        dataPayload = await new Promise((resolve) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                let w = img.width, h = img.height;
+                                const maxDim = 1200;
+                                if (w > maxDim || h > maxDim) {
+                                    if (w > h) { h = (h * maxDim) / w; w = maxDim; }
+                                    else { w = (w * maxDim) / h; h = maxDim; }
+                                }
+                                canvas.width = w; canvas.height = h;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, w, h);
+                                resolve(canvas.toDataURL('image/jpeg', 0.75));
+                            };
+                            img.onerror = () => resolve(dataPayload);
+                            img.src = dataPayload;
+                        });
+                    } catch (err) {}
+                }
+
+                sendRoomMessage({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type || 'application/octet-stream',
+                    data: dataPayload,
+                    isImage: isImg,
+                    timestamp: Date.now()
+                });
             };
             reader.readAsDataURL(file);
         }
@@ -5467,7 +6182,8 @@
             if (receiveCode) {
                 showView('view-receive');
                 evaluateNetworkWarnings(null, 'receive-network-warning');
-                initTransferRoom(receiveCode, 'receiver', roomKey);
+                const receiveToken = urlParams.get('token') || '';
+                initTransferRoom(receiveCode, 'receiver', roomKey, false, 'qr', receiveToken);
                 updateReceiverGuestUI(false);
                 return;
             }
